@@ -1,0 +1,60 @@
+.container-fluid {
+    padding: 0;
+}
+
+.row {
+    display: flex;
+    justify-content: center;  /* Horizontally center the logo */
+    align-items: flex-start;  /* Keep the logo at the top */
+    height: auto;  /* Adjust this to position the row correctly */
+}
+
+.col-12.text-center {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;  /* Ensures logo is aligned to the top */
+}
+
+/* Ensure the search section spans the full width and is aligned at the top center */
+.header-search {
+    display: flex;
+    justify-content: center;  /* Horizontally center the search section */
+    align-items: center;      /* Vertically center inside its container */
+    width: 100%;              /* Take full width of the container */
+    position: absolute;       /* Position it absolutely */
+    top: 0;                   /* Align it at the top of the page */
+    left: 0;
+    z-index: 9999;            /* Ensure it's on top */
+}
+
+/* Ensure the form inside is aligned properly */
+.header-search-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    max-width: 700px;  /* Optional: You can set a max width */
+}
+
+/* Style the select and input to make them look consistent */
+.select-custom,
+.form-control {
+    width: 100%;  /* Make sure input/select takes full available width */
+}
+
+/* Optionally, style select and input for uniformity */
+.header-search-wrapper select,
+.header-search-wrapper input {
+    margin-right: 10px; /* Space between select, input, and button */
+}
+
+/* Align the search button */
+.header-search-wrapper button {
+    display: inline-block;
+    margin-left: 5px;
+}
+
+
+
+
+
