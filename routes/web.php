@@ -40,7 +40,7 @@ Route::get('/faq', function () {
 
 Route::get('/affiliate', function () {
     return view('others.affiliate');
-});
+})->name('register.affiliate');
 
 
 // use App\Http\Controllers\StoreController;

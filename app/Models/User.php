@@ -78,11 +78,13 @@ class User extends Authenticatable
         return "{$this->first_name} {$this->last_name}";
     }
 
-    public function hasPassword(): bool {
+    public function hasPassword(): bool
+    {
         return ! is_null($this->password);
     }
 
-    public function isGoogleAccount(): bool {
+    public function isGoogleAccount(): bool
+    {
         return ! is_null($this->google_id);
     }
 
@@ -133,6 +135,29 @@ class User extends Authenticatable
     {
         return $this->hasMany(Product::class);
     }
+
+    public function referralsMade()
+    {
+        return $this->hasMany(Referral::class, 'referrer_id');
+    }
+
+     public function boostSubscriptions()
+    {
+        return $this->hasMany(BoostSubscription::class);
+    }
+
+     public function activeBoostSubscription()
+    {
+        return $this->boostSubscriptions()->active()->latest('expires_at')->first();
+    }
+    
+
+     public function hasActiveBoostSubscription(): bool
+    {
+        return $this->activeBoostSubscription() !== null;
+    }
+
+
 
     public function activeProducts()
     {
@@ -323,11 +348,11 @@ class User extends Authenticatable
         return $this->user_type === 'vendor';
     }
 
-     public function isCustomer()
+    public function isCustomer()
     {
         return $this->user_type === 'customer';
     }
-    
+
     public function isAdmin()
     {
         return $this->user_type === 'admin';
@@ -378,19 +403,19 @@ class User extends Authenticatable
 
         return $this->marketer->getPerformanceStats();
     }
-    
-        // app/Models/User.php
+
+    // app/Models/User.php
     public function conversations()
     {
         return $this->belongsToMany(Conversation::class, 'participants');
     }
-    
+
     public function messages()
     {
         return $this->hasMany(Message::class);
     }
-    
-      public function assignedTasks()
+
+    public function assignedTasks()
     {
         return $this->hasMany(Task::class, 'marketer_id');
     }
@@ -426,8 +451,8 @@ class User extends Authenticatable
     {
         return $this->assignedTasks()->where('status', 'completed');
     }
-    
-    
+
+
     // User.php
     public function marketercommissionTransactions()
     {
@@ -440,13 +465,13 @@ class User extends Authenticatable
             'id'             // Local key on marketers table
         );
     }
-    
+
     // app/Models/User.php
     public function staffProfile()
     {
         return $this->hasOne(StaffProfile::class);
     }
-  
+
 
     /**
      * Check if user is a marketer.

@@ -61,7 +61,7 @@
                 </div>
 
                 <div class="rating-block mb-3">
-                    <i class="bi bi-star-fill text-warning"></i>
+                    <i class="bi bi-star-fill text-lemon"></i>
                     <span class="fs-5 fw-bold">{{ $product->rating }}</span>
                     <span class="text-muted">({{ $product->review_count }} reviews)</span>
                 </div>
@@ -122,9 +122,10 @@
 
                 <!-- Share Buttons -->
                 <div class="share-buttons d-grid gap-2 d-md-flex mb-4">
-                    <a class="btn btn-outline-success flex-fill" id="whatsappShareBtn" href="#" target="_blank" rel="noopener">
-                        <i class="fab fa-whatsapp me-2"></i>Share on WhatsApp
-                    </a>
+                    <button type="button" class="btn btn-outline-success flex-fill" data-bs-toggle="modal"
+                        data-bs-target="#shareModal">
+                        <i class="fas fa-share-alt me-2"></i>Share
+                    </button>
                 </div>
 
                 <!-- Seller Information -->
@@ -352,11 +353,11 @@
                                     <div class="stars mb-1">
                                         @for ($i = 1; $i <= 5; $i++)
                                             @if ($i <= floor($product->rating))
-                                                <i class="bi bi-star-fill text-success"></i>
+                                                <i class="bi bi-star-fill text-lemon"></i>
                                             @elseif ($i == ceil($product->rating) && $product->rating - floor($product->rating) > 0)
-                                                <i class="bi bi-star-half text-warning"></i>
+                                                <i class="bi bi-star-half text-lemon"></i>
                                             @else
-                                                <i class="bi bi-star text-warning"></i>
+                                                <i class="bi bi-star text-lemon"></i>
                                             @endif
                                         @endfor
                                     </div>
@@ -416,7 +417,7 @@
                                     </div>
                                     <div class="stars mb-2">
                                         @for ($i = 1; $i <= 5; $i++)
-                                            <i class="bi bi-star{{ $i <= $review->rating ? '-fill' : '' }} text-success small"></i>
+                                            <i class="bi bi-star{{ $i <= $review->rating ? '-fill' : '' }} text-lemon small"></i>
                                         @endfor
                                     </div>
                                     @if ($review->comment)
@@ -481,12 +482,18 @@
         @endif
     </div>
 
+    @include('products.partials.share-modal')
+
 @endsection
 
 @push('styles')
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <style>
+        .text-lemon {
+            color: #8fc74a !important;
+        }
+
         /* Star rating input (review form) — radios in reverse order + CSS
            sibling selectors so hover/selection highlight correctly without JS */
         .star-rating-input {
@@ -508,7 +515,7 @@
         .star-rating-input input:checked ~ label,
         .star-rating-input label:hover,
         .star-rating-input label:hover ~ label {
-            color: #ffc107;
+            color: #8fc74a;
         }
 
         :root {
@@ -901,14 +908,6 @@
             if (!hasViewedRecently({{ $product->id }})) {
                 trackProductView();
                 setViewCookie({{ $product->id }});
-            }
-
-            // Build the "Share on WhatsApp" link (separate from the
-            // "Chat on WhatsApp" contact-seller button above)
-            const whatsappShareBtn = document.getElementById('whatsappShareBtn');
-            if (whatsappShareBtn) {
-                const shareText = @json("Check out this listing on Agii: {$product->title} - ₦" . number_format($product->price)) + '\n' + window.location.href;
-                whatsappShareBtn.href = 'https://wa.me/?text=' + encodeURIComponent(shareText);
             }
 
             // Initialize Swiper
