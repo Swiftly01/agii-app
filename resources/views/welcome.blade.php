@@ -199,7 +199,7 @@
                     <h4 class="fw-bold mb-0"><i class="bi bi-rocket-takeoff-fill text-success me-2"></i> BOOSTED LISTINGS</h4>
                     <p class="text-muted mb-0 small">Vendors putting their best listings forward.</p>
                 </div>
-                <a href="{{ route('home', ['sort' => 'featured']) }}" class="btn btn-outline-success btn-sm">View All</a>
+                <a href="{{ route('products.boosted') }}" class="btn btn-outline-success btn-sm">View All</a>
             </div>
         </div>
 

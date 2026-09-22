@@ -19,7 +19,7 @@ class ProductController extends Controller
 {
 
 
-public function index(Request $request,  $category = null)
+public function index(Request $request, $category = null)
 {
     // Shared categories for navigation
     $categories = Category::all();
@@ -154,7 +154,7 @@ public function index(Request $request,  $category = null)
         }
 
         // 🔹 SORTING
-        $sort = $request->input('sort', 'latest');
+        $sort = $request->get('sort', 'latest');
         switch ($sort) {
             case 'price_low':
                 $servicesQuery->orderBy('price', 'asc');
@@ -622,6 +622,23 @@ public function homeByCategory(Request $request, $category = null)
 
 
         return view('products.product-detail', compact('product', 'relatedProducts', 'userReview'));
+    }
+
+    /**
+     * All currently-boosted products (vendor-paid, via the boost
+     * subscription feature) — not the same set as $featuredProducts on the
+     * home page carousel, which mixes in admin-curated "featured" picks too.
+     */
+    public function boosted(Request $request)
+    {
+        $products = Product::with(['user', 'category'])
+            ->where('status', 'active')
+            ->boosted()
+            ->orderBy('boost_expires_at', 'desc')
+            ->paginate(20)
+            ->appends($request->query());
+
+        return view('products.boosted', compact('products'));
     }
 
     public function byCategory($categorySlug)

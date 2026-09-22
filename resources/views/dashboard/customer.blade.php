@@ -6,9 +6,14 @@
         <div class="row justify-content-center">
             <div class="col-lg-10">
                 <!-- Dashboard Header -->
-                <div class="dashboard-header mb-4">
-                    <h1 class="h3 mb-2">Customer Dashboard</h1>
-                    <p class="text-muted">Track your vendor contacts and deal outcomes</p>
+                <div class="dashboard-header mb-4 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <div>
+                        <h1 class="h3 mb-2">Customer Dashboard</h1>
+                        <p class="text-muted mb-0">Track your vendor contacts and deal outcomes</p>
+                    </div>
+                    <a href="{{ route('become-seller') }}" class="btn btn-primary">
+                        <i class="fas fa-shop me-1"></i>Become a Seller
+                    </a>
                 </div>
 
                 <!-- Statistics Cards -->
