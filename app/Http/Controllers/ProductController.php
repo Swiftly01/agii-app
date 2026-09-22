@@ -166,7 +166,10 @@ public function index(Request $request, $category = null)
                 $servicesQuery->orderBy('rating', 'desc');
                 break;
             case 'featured':
-                $servicesQuery->orderBy('featured', 'desc')->latest();
+                $servicesQuery->orderByRaw(
+                    'CASE WHEN boost_expires_at IS NOT NULL AND boost_expires_at > ? THEN 0 ELSE 1 END',
+                    [now()]
+                )->orderBy('featured', 'desc')->latest();
                 break;
             case 'popular':
                 $servicesQuery->orderBy('views', 'desc')->latest();
@@ -285,7 +288,10 @@ public function index(Request $request, $category = null)
             $productsQuery->orderBy('rating', 'desc');
             break;
         case 'featured':
-            $productsQuery->orderBy('featured', 'desc')->orderBy('created_at', 'desc');
+            $productsQuery->orderByRaw(
+                'CASE WHEN boost_expires_at IS NOT NULL AND boost_expires_at > ? THEN 0 ELSE 1 END',
+                [now()]
+            )->orderBy('featured', 'desc')->orderBy('created_at', 'desc');
             break;
         default:
             $productsQuery->latest();
@@ -311,7 +317,13 @@ public function index(Request $request, $category = null)
         
         $featuredProducts = Product::with(['user', 'category'])
             ->where('status', 'active')
-            ->where('featured', true)
+            ->where(function ($q) {
+                $q->where('featured', true)
+                    ->orWhere(function ($q2) {
+                        $q2->where('is_boost_carousel_pick', true)
+                            ->where('boost_expires_at', '>', now());
+                    });
+            })
             ->orderBy('created_at', 'desc')
             ->limit(12)
             ->get();
@@ -511,7 +523,10 @@ public function homeByCategory(Request $request, $category = null)
                 $productsQuery->orderBy('rating', 'desc');
                 break;
             case 'featured':
-                $productsQuery->orderBy('featured', 'desc')->orderBy('created_at', 'desc');
+                $productsQuery->orderByRaw(
+                'CASE WHEN boost_expires_at IS NOT NULL AND boost_expires_at > ? THEN 0 ELSE 1 END',
+                [now()]
+            )->orderBy('featured', 'desc')->orderBy('created_at', 'desc');
                 break;
             default:
                 $productsQuery->latest();
@@ -541,7 +556,13 @@ public function homeByCategory(Request $request, $category = null)
 
     $featuredProducts = Product::with(['user', 'category'])
         ->where('status', 'active')
-        ->where('featured', true)
+        ->where(function ($q) {
+            $q->where('featured', true)
+                ->orWhere(function ($q2) {
+                    $q2->where('is_boost_carousel_pick', true)
+                        ->where('boost_expires_at', '>', now());
+                });
+        })
         ->latest()
         ->limit(12)
         ->get();
@@ -584,7 +605,8 @@ public function homeByCategory(Request $request, $category = null)
             ->where('status', 'active')
             ->firstOrFail();
 
-        
+        // The current customer's own review (if any), so the form can be
+        // pre-filled as an edit rather than a fresh submission.
         $userReview = Auth::check()
             ? $product->reviews->firstWhere('user_id', Auth::id())
             : null;
@@ -601,6 +623,24 @@ public function homeByCategory(Request $request, $category = null)
 
         return view('products.product-detail', compact('product', 'relatedProducts', 'userReview'));
     }
+
+    /**
+     * All currently-boosted products (vendor-paid, via the boost
+     * subscription feature) — not the same set as $featuredProducts on the
+     * home page carousel, which mixes in admin-curated "featured" picks too.
+     */
+    public function boosted(Request $request)
+    {
+        $products = Product::with(['user', 'category'])
+            ->where('status', 'active')
+            ->boosted()
+            ->orderBy('boost_expires_at', 'desc')
+            ->paginate(20)
+            ->appends($request->query());
+
+        return view('products.boosted', compact('products'));
+    }
+
     public function byCategory($categorySlug)
     {
         $category = Category::where('slug', $categorySlug)->firstOrFail();

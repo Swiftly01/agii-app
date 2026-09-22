@@ -30,6 +30,9 @@ Route::get('/product/{slug}', [ProductController::class, 'show'])->name('product
 Route::post('/products/track-view', [ProductController::class, 'trackView'])->name('products.track-view');
 Route::get('/products/{product}/inquiries-count', [ProductController::class, 'getInquiriesCount'])->name('products.inquiries-count');
 
+
+Route::get('/boosted-products', [ProductController::class, 'boosted'])->name('products.boosted');
+
 Route::post('/products/{product}/reviews', [ReviewController::class, 'store'])->name('reviews.store');
 Route::delete('/reviews/{review}', [ReviewController::class, 'destroy'])->name('reviews.destroy');
 

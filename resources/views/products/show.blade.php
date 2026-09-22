@@ -327,7 +327,7 @@
 
 
 
-                              {{--  <div class="col-md-6 d-none">
+                                <div class="col-md-6 d-none">
                                     <h5 class="fw-bold mb-3">Return Policy</h5>
                                     <ul class="feature-list">
                                         <li>3-day return policy for defective products</li>
@@ -336,7 +336,7 @@
                                         <li>Refund processed within 3-5 business days</li>
                                         <li>No returns for change of mind</li>
                                     </ul>
-                                </div> }}
+                                </div>
                             </div>
                         </div>
                     </div>

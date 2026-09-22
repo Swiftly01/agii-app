@@ -92,7 +92,7 @@
                                         <div class="rating-block">
                                             @for ($i = 1; $i <= 5; $i++)
                                                 @if ($i <= floor($product->rating))
-                                                    <i class="bi bi-star-fill text-warning"></i>
+                                                    <i class="bi bi-star-fill text-success"></i>
                                                 @elseif ($i == ceil($product->rating) && $product->rating - floor($product->rating) > 0)
                                                     <i class="bi bi-star-half text-warning"></i>
                                                 @else

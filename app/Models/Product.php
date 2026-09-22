@@ -28,6 +28,8 @@ class Product extends Model
         'review_count',
         'status',
         'featured',
+        'boost_expires_at',
+        'is_boost_carousel_pick',
         'negotiable',
         'tags',
         'meta_title',
@@ -45,6 +47,8 @@ class Product extends Model
         'negotiable' => 'boolean',
         'rating' => 'decimal:1',
         'views' => 'integer',
+        'boost_expires_at' => 'datetime',
+
     ];
 
     // Relationships
@@ -63,7 +67,7 @@ class Product extends Model
         return $this->hasMany(VendorContact::class);
     }
 
-    
+
     public function reviews()
     {
         return $this->hasMany(Review::class);
@@ -94,7 +98,7 @@ class Product extends Model
     // Methods
     public function incrementViews()
     {
-         $this->increment('views');
+        $this->increment('views');
     }
 
     public function generateSlug()
@@ -113,12 +117,24 @@ class Product extends Model
         })->toArray();
     }
 
-     public function refreshRatingSummary(): void
+    public function refreshRatingSummary(): void
     {
         $this->rating = round($this->reviews()->avg('rating') ?? 0, 1);
         $this->review_count = $this->reviews()->count();
         $this->saveQuietly();
     }
+
+    public function isBoosted(): bool
+    {
+        return $this->boost_expires_at !== null && $this->boost_expires_at->isFuture();
+    }
+
+    public function scopeBoosted($query)
+    {
+        return $query->whereNotNull('boost_expires_at')->where('boost_expires_at', '>', now());
+    }
+
+
 
     public function store()
     {

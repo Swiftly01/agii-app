@@ -863,7 +863,7 @@ header {
     gap: 6px;
     margin: 12px 0;
     padding: 8px 12px;
-    background: var(--light-primary-color);
+    /* background: var(--light-primary-color);  */
     border-radius: 20px;
     width: fit-content;
 }

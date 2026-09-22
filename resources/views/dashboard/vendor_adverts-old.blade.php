@@ -7,23 +7,8 @@
             <div class="col-12">
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <h1 class="h3 fw-bold">My Products</h1>
-                    <a href="{{ route('boost.plans') }}" class="btn btn-success btn-sm">
-                        <i class="bi bi-rocket-takeoff-fill me-1"></i>Boost Your Products
-                    </a>
-                </div>
 
-                @if ($boostUsage['limit'] > 0)
-                    <div class="alert alert-light border d-flex align-items-center mb-4">
-                        <i class="bi bi-rocket-takeoff-fill text-success me-2"></i>
-                        <span>
-                            <strong>{{ $boostUsage['used'] }} of {{ $boostUsage['limit'] }}</strong>
-                            products boosted
-                            @if ($boostUsage['used'] >= $boostUsage['limit'])
-                                — unboost a product below to free up a slot.
-                            @endif
-                        </span>
-                    </div>
-                @endif
+                </div>
 
                 @if (session('success'))
                     <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -76,7 +61,7 @@
                                 </div>
 
                                 <div class="card-footer bg-transparent border-top-0">
-                                    <div class="d-flex gap-2 mb-2">
+                                    <div class="d-flex gap-2">
                                         <a href="{{ route('product.show', $product->slug) }}"
                                             class="btn btn-outline-primary btn-sm flex-fill" target="_blank">
                                             <i class="bi bi-eye me-1"></i>View
@@ -95,52 +80,6 @@
                                                 <i class="bi bi-trash"></i>
                                             </button>
                                         </form>
-                                    </div>
-
-                                    <div class="d-flex gap-2">
-                                        @if ($product->isBoosted())
-                                            <span class="badge bg-success flex-fill py-2">
-                                                <i class="bi bi-rocket-takeoff-fill me-1"></i>Boosted until
-                                                {{ $product->boost_expires_at->format('M j') }}
-                                            </span>
-                                            <form action="{{ route('products.unboost', $product->id) }}" method="POST">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="btn btn-outline-secondary btn-sm"
-                                                    title="Remove boost">
-                                                    <i class="bi bi-x-circle"></i>
-                                                </button>
-                                            </form>
-                                            @if (! $product->is_boost_carousel_pick)
-                                                <form action="{{ route('products.boost.carousel-pick', $product->id) }}"
-                                                    method="POST">
-                                                    @csrf
-                                                    <button type="submit" class="btn btn-outline-success btn-sm"
-                                                        title="Feature in home page carousel">
-                                                        <i class="bi bi-star"></i>
-                                                    </button>
-                                                </form>
-                                            @else
-                                                <span class="btn btn-success btn-sm disabled" title="Featured in carousel">
-                                                    <i class="bi bi-star-fill"></i>
-                                                </span>
-                                            @endif
-                                        @else
-                                            @if ($boostUsage['used'] >= $boostUsage['limit'])
-                                                <span class="btn btn-outline-secondary btn-sm w-100 disabled"
-                                                    title="You've reached your boost limit ({{ $boostUsage['limit'] }})">
-                                                    <i class="bi bi-rocket-takeoff me-1"></i>Boost limit reached
-                                                </span>
-                                            @else
-                                                <form action="{{ route('products.boost', $product->id) }}" method="POST"
-                                                    class="flex-fill">
-                                                    @csrf
-                                                    <button type="submit" class="btn btn-outline-success btn-sm w-100">
-                                                        <i class="bi bi-rocket-takeoff me-1"></i>Boost this product
-                                                    </button>
-                                                </form>
-                                            @endif
-                                        @endif
                                     </div>
                                 </div>
                             </div>

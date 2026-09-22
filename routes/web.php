@@ -40,7 +40,7 @@ Route::get('/faq', function () {
 
 Route::get('/affiliate', function () {
     return view('others.affiliate');
-});
+})->name('register.affiliate');
 
 
 // use App\Http\Controllers\StoreController;
@@ -95,15 +95,16 @@ Route::get('/test-mail', function () {
         dump('Mail test started');
 
         Mail::send('emails.staff-welcome', [
-            'user'     => 'agiiitsuport001@gmail.com',
-            'password' => 'TestPassword123',
+            'user'     => 'devkaz100@gmail.com',
+            'password' => 'Kazeem#24',
+            'full_name' => 'Test User',
             'staff'    => (object) [
                 'first_name' => 'Test',
                 'last_name'  => 'User',
                 'full_name'  => 'Test User',
             ],
         ], function ($message) {
-            $message->to('agiiitsuport001@gmail.com')
+            $message->to('devkaz100@gmail.com')
                     ->subject('Mail Test Successful 🎉');
         });
 

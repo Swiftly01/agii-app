@@ -7,14 +7,17 @@ use Illuminate\Http\Request;
 use App\Models\Product;
 use App\Models\VendorContact;
 use App\Models\User;
+use App\Services\ProductBoostService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 
 class VendorDashboardController extends Controller
 {
+    public function __construct(private readonly ProductBoostService $productBoostService)
+    {
+    }
     public function index()
-    {   
-        
+    {
         $vendor = Auth::user();
         
         // Get vendor's products
@@ -129,12 +132,10 @@ class VendorDashboardController extends Controller
     {
         $vendor = Auth::user();
 
-        // dd('Advert page coming soon!');
-
         // Get vendor's products
         $products = Product::where('user_id', $vendor->id)->paginate(20);
-        //dd($products);
-        return view('dashboard.vendor_adverts', compact('products'));
-        // return view('dashboard.vendor_adverts', compact('products'));
+        $boostUsage = $this->productBoostService->boostUsage($vendor);
+
+        return view('dashboard.vendor_adverts', compact('products', 'boostUsage'));
     }
 }

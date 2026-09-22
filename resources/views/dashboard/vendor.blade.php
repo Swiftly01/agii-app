@@ -1,6 +1,16 @@
 @extends('layout.layout')
 @section('title', 'Vendor Dashboard')
 @section('content')
+   
+@if (session('success'))
+    <div class="d-flex justify-content-end w-100">
+        <div class="alert alert-success mb-3" style="width: 700px;">
+            {{ session('success') }}
+        </div>
+    </div>
+@endif
+
+
 
     <div class="container-fluid">
         <!-- Sidebar -->
