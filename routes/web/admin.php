@@ -3,9 +3,10 @@
 use Illuminate\Support\Facades\Route;
 
 use App\Http\Controllers\AdminController;
-use App\Http\Controllers\ProductController;
 use App\Http\Controllers\AdminCategoryController;
 use App\Http\Controllers\AdminVendorController;
+use App\Http\Controllers\AdminCustomerController;
+use App\Http\Controllers\ProductController;
 
 // In routes/web.php
 Route::prefix('admin')->middleware('auth')->group(function () {
@@ -31,7 +32,7 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     // Route::get('/products/create', [ProductController::class, 'create'])->name('admin.products.create');
      Route::get('/products/{slug}/edit', [ProductController::class, 'edit'])->name('admin.products.edit');
 
-
+    // Categories Management
     Route::get('/categories', [AdminCategoryController::class, 'index'])->name('admin.categories.index');
     Route::get('/categories/create', [AdminCategoryController::class, 'create'])->name('admin.categories.create');
     Route::post('/categories', [AdminCategoryController::class, 'store'])->name('admin.categories.store');
@@ -40,7 +41,11 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::delete('/categories/{category}', [AdminCategoryController::class, 'destroy'])->name('admin.categories.destroy');
 
     // Customers Management
-    Route::get('/customers', [AdminController::class, 'showCustomers'])->name('admin.customers.index');
+    Route::get('/customers', [AdminCustomerController::class, 'index'])->name('admin.customers.index');
+    Route::get('/customers/{id}', [AdminCustomerController::class, 'show'])->name('admin.customers.show');
+    Route::get('/customers/{id}/edit', [AdminCustomerController::class, 'edit'])->name('admin.customers.edit');
+    Route::put('/customers/{id}', [AdminCustomerController::class, 'update'])->name('admin.customers.update');
+    Route::delete('/customers/{id}', [AdminCustomerController::class, 'destroy'])->name('admin.customers.destroy');
 
     // Users Management
     // Route::get('/users', [AdminController::class, 'showUsers'])->name('admin.users.index');
