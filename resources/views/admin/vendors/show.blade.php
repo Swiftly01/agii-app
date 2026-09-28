@@ -16,6 +16,31 @@
                     <h4>{{ $vendor->first_name }} {{ $vendor->last_name }}</h4>
                     <p class="text-muted mb-3">{{ $vendor->user_type }}</p>
 
+                    @php $vs = \App\Enums\VendorStatus::tryFrom($vendor->vendor_status ?? ''); @endphp
+                    <div class="mb-3">
+                        @if($vs)
+                            <span class="badge {{ $vs->badgeClass() }} fs-6">{{ $vs->label() }}</span>
+                        @endif
+                        @if($vendor->vendor_status === 'rejected' && $vendor->vendor_rejection_reason)
+                            <p class="text-danger small mt-2 mb-0">Reason: {{ $vendor->vendor_rejection_reason }}</p>
+                        @endif
+                    </div>
+
+                    @if($vendor->vendor_status === 'pending')
+                        <div class="d-grid gap-2 mb-3">
+                            <form action="{{ route('admin.vendors.approve', $vendor->id) }}" method="POST"
+                                onsubmit="return confirm('Approve {{ $vendor->first_name }} as a vendor? They will be able to start listing products.');">
+                                @csrf
+                                <button type="submit" class="btn btn-success w-100">
+                                    <i class="fas fa-check me-2"></i>Approve Vendor
+                                </button>
+                            </form>
+                            <button type="button" class="btn btn-outline-danger w-100" data-bs-toggle="modal" data-bs-target="#vendorRejectModal">
+                                <i class="fas fa-times me-2"></i>Reject Vendor
+                            </button>
+                        </div>
+                    @endif
+
                     <div class="vendor-contact mb-4">
                         <div class="mb-2">
                             <i class="fas fa-envelope me-2 text-primary"></i>
@@ -331,6 +356,29 @@
                     </div>
                 </form>
             </div>
+        </div>
+    </div>
+
+    <!-- Vendor Reject Modal -->
+    <div class="modal fade" id="vendorRejectModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <form method="POST" action="{{ route('admin.vendors.reject', $vendor->id) }}">
+                @csrf
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Reject Vendor Application</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <label for="vendorRejectReasonShow" class="form-label">Reason (shown to the vendor)</label>
+                        <textarea name="reason" id="vendorRejectReasonShow" class="form-control" rows="3" required></textarea>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-danger">Reject Vendor</button>
+                    </div>
+                </div>
+            </form>
         </div>
     </div>
 @endsection

@@ -492,6 +492,7 @@ class MarketerController extends Controller
                 'city' => $request->city,
                 'address' => $request->address,
                 'referral_code' => $vendorReferralCode,
+                'vendor_status' => \App\Enums\VendorStatus::Pending->value,
                 'referred_by' => Auth::id(),
                 'email_verified_at' => now(), // Auto-verify since marketer is adding
                 'terms_accepted' => true,

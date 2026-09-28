@@ -27,6 +27,7 @@ class User extends Authenticatable
         'google_id',
         'avatar',
         'user_type',
+        'vendor_status',
         'state',
         'local_government',
         'city',
@@ -45,6 +46,9 @@ class User extends Authenticatable
         'newsletter_subscribed',
         'terms_accepted',
         'email_verified_at',
+        'vendor_approved_at',
+        'vendor_approved_by',
+        'vendor_rejection_reason'
     ];
 
     /**
@@ -66,6 +70,7 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
+            'vendor_approved_at' => 'datetime',
             'password' => 'hashed',
             'newsletter_subscribed' => 'boolean',
             'terms_accepted' => 'boolean',
@@ -363,6 +368,36 @@ class User extends Authenticatable
     public function isAdmin()
     {
         return $this->user_type === 'admin';
+    }
+
+    // --- Vendor approval -------------------------------------------------
+    // `vendor_status`/`vendor_approved_*` are intentionally NOT in
+    // $fillable: they must only ever be changed through
+    // VendorApprovalService, never via a mass-assigned form field.
+
+    public function vendorApprovedBy()
+    {
+        return $this->belongsTo(User::class, 'vendor_approved_by');
+    }
+
+    public function isVendorApproved(): bool
+    {
+        return $this->user_type === 'vendor' && $this->vendor_status === 'approved';
+    }
+
+    public function isVendorPending(): bool
+    {
+        return $this->user_type === 'vendor' && $this->vendor_status === 'pending';
+    }
+
+    public function isVendorRejected(): bool
+    {
+        return $this->user_type === 'vendor' && $this->vendor_status === 'rejected';
+    }
+
+    public function scopeVendorStatus($query, string $status)
+    {
+        return $query->where('user_type', 'vendor')->where('vendor_status', $status);
     }
 
 

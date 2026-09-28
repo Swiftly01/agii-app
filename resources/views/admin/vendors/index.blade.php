@@ -9,6 +9,11 @@
             <div class="row align-items-center">
                 <div class="col-md-6">
                     <h6 class="card-title mb-0">All Vendors</h6>
+                    @if($pendingCount > 0)
+                        <a href="{{ route('admin.vendors.index', ['vendor_status' => 'pending']) }}" class="badge bg-warning text-dark text-decoration-none">
+                            {{ $pendingCount }} awaiting approval
+                        </a>
+                    @endif
                 </div>
                 <div class="col-md-6">
                     <div class="d-flex justify-content-end">
@@ -38,6 +43,14 @@
                             <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>Active</option>
                             <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>Inactive
                             </option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <select name="vendor_status" class="form-select" onchange="this.form.submit()">
+                            <option value="">All Approval States</option>
+                            <option value="pending" {{ request('vendor_status') == 'pending' ? 'selected' : '' }}>Pending Approval</option>
+                            <option value="approved" {{ request('vendor_status') == 'approved' ? 'selected' : '' }}>Approved</option>
+                            <option value="rejected" {{ request('vendor_status') == 'rejected' ? 'selected' : '' }}>Rejected</option>
                         </select>
                     </div>
                     <div class="col-md-3">
@@ -71,6 +84,7 @@
                                 <th>Contact</th>
                                 <th>Products</th>
                                 <th>Status</th>
+                                <th>Approval</th>
                                 <th>Registered</th>
                                 <th>Actions</th>
                             </tr>
@@ -115,6 +129,28 @@
                                             $statusText = $vendor->products_count > 0 ? 'Active' : 'Inactive';
                                         @endphp
                                         <span class="badge bg-{{ $statusClass }}">{{ $statusText }}</span>
+                                    </td>
+                                    <td>
+                                        @php $vs = \App\Enums\VendorStatus::tryFrom($vendor->vendor_status ?? ''); @endphp
+                                        @if($vs)
+                                            <span class="badge {{ $vs->badgeClass() }}">{{ $vs->label() }}</span>
+                                        @else
+                                            <span class="badge bg-secondary">N/A</span>
+                                        @endif
+                                        @if($vendor->vendor_status === 'pending')
+                                            <div class="btn-group btn-group-sm mt-1" role="group">
+                                                <form action="{{ route('admin.vendors.approve', $vendor->id) }}" method="POST" onsubmit="return confirm('Approve this vendor?');">
+                                                    @csrf
+                                                    <button type="submit" class="btn btn-sm btn-success" title="Approve Vendor">
+                                                        <i class="fas fa-check"></i>
+                                                    </button>
+                                                </form>
+                                                <button type="button" class="btn btn-sm btn-outline-danger" title="Reject Vendor"
+                                                    onclick="openVendorRejectModal({{ $vendor->id }})">
+                                                    <i class="fas fa-times"></i>
+                                                </button>
+                                            </div>
+                                        @endif
                                     </td>
                                     <td>
                                         {{ $vendor->created_at->format('M d, Y') }}
@@ -178,6 +214,29 @@
             @endif
         </div>
     </div>
+
+    <!-- Vendor Reject Modal -->
+    <div class="modal fade" id="vendorRejectModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <form id="vendorRejectForm" method="POST" action="">
+                @csrf
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Reject Vendor Application</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <label for="vendorRejectReason" class="form-label">Reason (shown to the vendor)</label>
+                        <textarea name="reason" id="vendorRejectReason" class="form-control" rows="3" required></textarea>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-danger">Reject Vendor</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
 @endsection
 
 @push('scripts')
@@ -205,6 +264,14 @@
             if (confirm('Are you sure you want to delete this vendor? This action cannot be undone.')) {
                 document.getElementById('deleteForm' + vendorId).submit();
             }
+        }
+
+        // Vendor rejection modal
+        function openVendorRejectModal(vendorId) {
+            const form = document.getElementById('vendorRejectForm');
+            form.action = '/admin/vendors/' + vendorId + '/reject';
+            document.getElementById('vendorRejectReason').value = '';
+            new bootstrap.Modal(document.getElementById('vendorRejectModal')).show();
         }
     </script>
     <script>
