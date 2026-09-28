@@ -1052,14 +1052,16 @@ public function homeByCategory(Request $request, $category = null)
                 'specifications' => $specifications,
                 'negotiable' => $request->boolean('negotiable'),
                 'tags' => $request->tags ?? [],
-                'status' => 'active',
+                // New listings always start pending — they go live only
+                // once an admin approves them (see ProductApprovalService).
+                'status' => 'pending',
                 'meta_title' => $request->title,
                 'meta_description' => Str::limit($request->description, 160),
             ]);
 
             return response()->json([
                 'success' => true,
-                'message' => 'Product listed successfully!',
+                'message' => 'Product submitted for review! It will appear once approved by our team.',
                 'product' => $product,
                 'redirect_url' => route('products.added', $product->id)
             ]);
@@ -1154,7 +1156,10 @@ public function homeByCategory(Request $request, $category = null)
             'images.*' => 'image|mimes:jpeg,png,jpg,gif,webp|max:5120',
             'specifications' => 'nullable',
             'negotiable' => 'boolean',
-            'status' => 'required|in:active,inactive,pending',
+            // Note: 'status' is NOT accepted from the request. A vendor
+            // could otherwise self-approve a listing by posting
+            // status=active on their own edit form. Admins change status
+            // only through the approval endpoints (ProductApprovalService).
         ]);
 
         try {
@@ -1216,10 +1221,18 @@ public function homeByCategory(Request $request, $category = null)
                 'images' => $imagePaths,
                 'specifications' => $specifications,
                 'negotiable' => $request->boolean('negotiable'),
-                'status' => $request->status,
                 'meta_title' => $request->title,
                 'meta_description' => Str::limit($request->description, 160),
             ]);
+
+            // A previously-approved listing goes back to pending after a
+            // substantive edit, so admin reviews the new content rather
+            // than the edit silently staying live under the old approval.
+            // Listings that are already pending, or already rejected, stay
+            // as-is — no need to re-queue something admin hasn't seen yet.
+            if ($product->status === 'active') {
+                $product->forceFill(['status' => 'pending'])->save();
+            }
 
             return response()->json([
                 'success' => true,

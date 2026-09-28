@@ -69,11 +69,14 @@ class GoogleAuthService
       'google_id' => $googleUser->getId(),
       'avatar' => $googleUser->getAvatar(),
       'user_type' => $userType,
+      'vendor_status' => $userType === 'vendor' ? \App\Enums\VendorStatus::Pending->value : null,
       'referral_code' => $this->generateReferralCode($firstName),
       'terms_accepted' => true,
       'newsletter_subscribed' => false,
       'email_verified_at' => now()
     ]);
+
+  
   }
 
   private function generateReferralCode(string $firstName): string

@@ -112,9 +112,28 @@
                             <h4 class="mb-0">{{ number_format($stats['pendingProducts']) }}</h4>
                         </div>
                     </div>
-                    {{-- <div class="mt-3">
-                        <a href="{{ route('admin.products.index') }}" class="text-danger small">Review products →</a>
-                    </div> --}}
+                    <div class="mt-3">
+                        <a href="{{ route('admin.products.pending') }}" class="text-danger small">Review products →</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card stat-card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="stat-icon bg-warning text-white rounded-circle me-3">
+                            <i class="fas fa-user-clock"></i>
+                        </div>
+                        <div>
+                            <h6 class="text-muted mb-1">Pending Vendors</h6>
+                            <h4 class="mb-0">{{ number_format($stats['pendingVendors']) }}</h4>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <a href="{{ route('admin.vendors.index', ['vendor_status' => 'pending']) }}" class="text-warning small">Review vendors →</a>
+                    </div>
                 </div>
             </div>
         </div>

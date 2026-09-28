@@ -35,6 +35,9 @@ class Product extends Model
         'meta_title',
         'meta_description',
         'views',
+        'reviewed_at',
+        'reviewed_by',
+        'rejection_reason'
     ];
 
     protected $casts = [
@@ -48,6 +51,7 @@ class Product extends Model
         'rating' => 'decimal:1',
         'views' => 'integer',
         'boost_expires_at' => 'datetime',
+        'reviewed_at' => 'datetime',
 
     ];
 
@@ -55,6 +59,13 @@ class Product extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    // reviewed_at/reviewed_by/rejection_reason are intentionally NOT in
+    // $fillable — only ProductApprovalService should set them.
+    public function reviewer()
+    {
+        return $this->belongsTo(User::class, 'reviewed_by');
     }
 
     public function category()
@@ -77,6 +88,31 @@ class Product extends Model
     public function scopeActive($query)
     {
         return $query->where('status', 'active');
+    }
+
+    public function scopePendingApproval($query)
+    {
+        return $query->where('status', 'pending');
+    }
+
+    /**
+     * "Rejected" isn't a separate status value — it's an inactive product
+     * that an admin explicitly reviewed and turned down (has a
+     * rejection_reason), as opposed to one a vendor simply disabled.
+     */
+    public function scopeRejected($query)
+    {
+        return $query->where('status', 'inactive')->whereNotNull('rejection_reason');
+    }
+
+    public function isPendingApproval(): bool
+    {
+        return $this->status === 'pending';
+    }
+
+    public function isRejected(): bool
+    {
+        return $this->status === 'inactive' && ! is_null($this->rejection_reason);
     }
 
     public function scopeFeatured($query)

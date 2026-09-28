@@ -9,7 +9,7 @@ use App\Http\Controllers\AdminCustomerController;
 use App\Http\Controllers\ProductController;
 
 // In routes/web.php
-Route::prefix('admin')->middleware('auth')->group(function () {
+Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     // Admin Dashboard
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('admin.dashboard');
 
@@ -19,6 +19,8 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::get('/vendors/{id}/edit', [AdminVendorController::class, 'edit'])->name('admin.vendors.edit');
     Route::put('/vendors/{id}', [AdminVendorController::class, 'update'])->name('admin.vendors.update');
     Route::delete('/vendors/{id}', [AdminVendorController::class, 'destroy'])->name('admin.vendors.destroy');
+    Route::post('/vendors/{id}/approve', [AdminVendorController::class, 'approve'])->name('admin.vendors.approve');
+    Route::post('/vendors/{id}/reject', [AdminVendorController::class, 'reject'])->name('admin.vendors.reject');
 
     // Products Management
     Route::get('/products', [AdminController::class, 'productsForApproval'])->name('admin.products.index');
@@ -121,7 +123,7 @@ Route::middleware(['auth'])->group(function () {
 // routes/web.php
 
 // Admin routes
-Route::middleware(['auth'])->prefix('admin')->group(function () {
+Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     // Vendor Advert Report
     Route::get('/vendor-advert-report', [ProductController::class, 'vendorAdvertReport'])
         ->name('vendor.advert.report');

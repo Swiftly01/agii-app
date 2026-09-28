@@ -114,6 +114,21 @@
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
             @endif
+
+            @if (Auth::user()->isVendorPending())
+                <div class="alert alert-warning" role="alert">
+                    <i class="bi bi-hourglass-split me-2"></i>
+                    Your vendor account is awaiting admin approval. You'll be able to list products once approved.
+                </div>
+            @elseif (Auth::user()->isVendorRejected())
+                <div class="alert alert-danger" role="alert">
+                    <i class="bi bi-x-circle me-2"></i>
+                    Your vendor application was not approved.
+                    @if(Auth::user()->vendor_rejection_reason)
+                        Reason: {{ Auth::user()->vendor_rejection_reason }}
+                    @endif
+                </div>
+            @endif
             <!-- Top Navigation -->
             <div class="top-nav">
                 <div class="search-box">
@@ -1097,7 +1112,7 @@
                     const bsAlert = new bootstrap.Alert(alert);
                     bsAlert.close();
                 }, 10000);
-            }
+            }                                                         
         });
     </script>
 @endpush

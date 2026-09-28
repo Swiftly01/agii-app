@@ -55,9 +55,11 @@ Route::get('/user/{user}/hotels', [ProductController::class, 'userHotels'])->nam
 Route::middleware(['auth'])->group(function () {
 
     Route::middleware([CheckSubscription::class])->group(function () {
-        // CREATE PRODUCT
-        Route::get('/sell/{type}', [ProductController::class, 'create'])->name('products.create');
-        Route::post('/products', [ProductController::class, 'store'])->name('products.store');
+        // CREATE PRODUCT — vendor must be admin-approved before they can list
+        Route::middleware(['vendor.approved'])->group(function () {
+            Route::get('/sell/{type}', [ProductController::class, 'create'])->name('products.create');
+            Route::post('/products', [ProductController::class, 'store'])->name('products.store');
+        });
 
         // EDIT / UPDATE / DELETE (MUST COME BEFORE wildcard category route)
         Route::get('/products/{slug}/edit', [ProductController::class, 'edit'])->name('products.edit');

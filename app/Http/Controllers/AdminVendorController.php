@@ -3,13 +3,17 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Services\VendorApprovalService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 
 class AdminVendorController extends Controller
 {
+    public function __construct(protected VendorApprovalService $vendorApproval) {}
+
     public function index(Request $request)
     {
         $query = User::where('user_type', 'vendor');
@@ -25,12 +29,19 @@ class AdminVendorController extends Controller
             });
         }
 
+        // `status` here still filters by whether the vendor has live
+        // products (pre-existing behaviour). `vendor_status` is the new,
+        // separate approval-workflow filter (pending/approved/rejected).
         if ($request->filled('status')) {
             if ($request->status === 'active') {
                 $query->whereHas('products', fn ($q) => $q->where('status', 'active'));
             } elseif ($request->status === 'inactive') {
                 $query->whereDoesntHave('products', fn ($q) => $q->where('status', 'active'));
             }
+        }
+
+        if ($request->filled('vendor_status')) {
+            $query->where('vendor_status', $request->vendor_status);
         }
 
         if ($request->filled('date_from')) {
@@ -43,11 +54,14 @@ class AdminVendorController extends Controller
 
         $vendors = $query->withCount(['products' => fn ($q) => $q->where('status', 'active')])
             ->withSum('products', 'views')
+            ->orderByRaw("CASE WHEN vendor_status = 'pending' THEN 0 ELSE 1 END")
             ->orderBy('created_at', 'desc')
             ->paginate(50)
             ->appends($request->except('page'));
 
-        return view('admin.vendors.index', compact('vendors'));
+        $pendingCount = User::vendorStatus('pending')->count();
+
+        return view('admin.vendors.index', compact('vendors', 'pendingCount'));
     }
 
     public function show(int $id)
@@ -66,6 +80,35 @@ class AdminVendorController extends Controller
         ];
 
         return view('admin.vendors.show', compact('vendor', 'vendorStats'));
+    }
+
+    /**
+     * Approve a vendor application. Once approved, the vendor can create
+     * products (see EnsureVendorIsApproved middleware).
+     */
+    public function approve(int $id): RedirectResponse
+    {
+        $vendor = User::where('user_type', 'vendor')->findOrFail($id);
+
+        $this->vendorApproval->approve($vendor, Auth::user());
+
+        return back()->with('success', "\"{$vendor->full_name}\" has been approved as a vendor.");
+    }
+
+    /**
+     * Reject a vendor application, with a reason shown to the vendor.
+     */
+    public function reject(Request $request, int $id): RedirectResponse
+    {
+        $vendor = User::where('user_type', 'vendor')->findOrFail($id);
+
+        $validated = $request->validate([
+            'reason' => ['required', 'string', 'max:1000'],
+        ]);
+
+        $this->vendorApproval->reject($vendor, Auth::user(), $validated['reason']);
+
+        return back()->with('success', "\"{$vendor->full_name}\"'s vendor application was rejected.");
     }
 
     public function edit(int $id)

@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Auth\Events\Registered;
+use Illuminate\Support\Facades\Log;
 
 class RegisterController extends Controller
 {
@@ -30,6 +31,8 @@ class RegisterController extends Controller
         }
 
         $user = $this->create($request->all());
+
+        
 
         // Fire the Registered event (this will trigger email verification)
         event(new Registered($user));
@@ -86,6 +89,7 @@ class RegisterController extends Controller
             'newsletter_subscribed' => isset($data['newsletter']),
             'terms_accepted' => true,
             'email_verified_at' => null, // Explicitly set to null
+
         ];
 
         // Add vendor-specific fields
@@ -98,12 +102,15 @@ class RegisterController extends Controller
                 'instagram_url' => $data['instagram_link'] ?? null,
                 'twitter_url' => $data['twitter_link'] ?? null,
                 'whatsapp_number' => $data['whatsapp_link'] ?? null,
+                'vendor_status' => \App\Enums\VendorStatus::Pending->value,
             ]);
         } else {
             // Add customer-specific fields
             $userData['location'] = $data['location'] ?? null;
             $userData['interests'] = !empty($data['interests']) ? json_encode($data['interests']) : null;
         }
+
+        
 
         return User::create($userData);
     }

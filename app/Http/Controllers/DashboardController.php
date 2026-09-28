@@ -33,6 +33,8 @@ class DashboardController extends Controller
             return redirect()->route('marketer.dashboard');
         } elseif ($user->user_type === 'admin') {
             return redirect()->route('admin.dashboard');
+        } elseif ($user->user_type === 'vendor') {
+            return redirect()->route('vendor.dashboard');
         }
 
         $contacts = VendorContact::with(['vendor', 'product'])

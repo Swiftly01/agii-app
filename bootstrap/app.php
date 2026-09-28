@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Middleware\EnsureUserIsAdmin;
+use App\Http\Middleware\EnsureVendorIsApproved;
 use App\Http\Middleware\VendorMiddleware;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -14,6 +16,8 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
          $middleware->alias([
         'vendor.subscription' => VendorMiddleware::class,
+        'vendor.approved' => EnsureVendorIsApproved::class,
+        'admin' => EnsureUserIsAdmin::class,
     ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
