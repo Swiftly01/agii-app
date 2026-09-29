@@ -52,7 +52,7 @@
                     @endif
                 </div>
                 <div class="text-center">
-                    <h6 class="mb-1">{{ Auth::user()->name }}</h6>
+                    <h6 class="mb-1">{{ Auth::user()->full_name }}</h6>
                     <p class="text-muted mb-1">
                         {{ Auth::user()->staffProfile->designation ?? 'Staff' }}
                     </p>
@@ -89,7 +89,7 @@
                             </a>
                         </li>
                         <li>
-                            <a href="{{ url('/my/documents') }}">
+                            <a href="{{ route('staff.documents.my-documents') }}">
                                 <i class="fas fa-file-alt"></i> My Documents
                             </a>
                         </li>
@@ -517,10 +517,10 @@
                                 @else
                                     <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-2" 
                                          style="width: 32px; height: 32px;">
-                                        {{ substr(Auth::user()->name, 0, 1) }}
+                                        {{ substr(Auth::user()->first_name, 0, 1) }}
                                     </div>
                                 @endif
-                                <span class="d-none d-md-inline">{{ Auth::user()->name }}</span>
+                                <span class="d-none d-md-inline">{{ Auth::user()->full_name }}</span>
                                 <i class="fas fa-chevron-down ms-2"></i>
                             </button>
                             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userProfileDropdown">

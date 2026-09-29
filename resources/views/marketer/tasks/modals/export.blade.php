@@ -6,24 +6,14 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <p class="text-muted mb-3">Export your tasks with current filters applied.</p>
+                <p class="text-muted mb-3">Export your tasks with current filters applied. To save as PDF, choose Print and select "Save as PDF".</p>
                 <div class="row g-3">
-                    <div class="col-6">
-                        <button type="button" class="btn btn-outline-success w-100" onclick="exportTasks('pdf')">
-                            <i class="fas fa-file-pdf me-2"></i>PDF
-                        </button>
-                    </div>
-                    <div class="col-6">
-                        <button type="button" class="btn btn-outline-primary w-100" onclick="exportTasks('excel')">
-                            <i class="fas fa-file-excel me-2"></i>Excel
-                        </button>
-                    </div>
-                    <div class="col-6">
+                    <div class="col-12 col-sm-6">
                         <button type="button" class="btn btn-outline-secondary w-100" onclick="exportTasks('csv')">
-                            <i class="fas fa-file-csv me-2"></i>CSV
+                            <i class="fas fa-file-csv me-2"></i>Download CSV (opens in Excel)
                         </button>
                     </div>
-                    <div class="col-6">
+                    <div class="col-12 col-sm-6">
                         <button type="button" class="btn btn-outline-info w-100" onclick="exportTasks('print')">
                             <i class="fas fa-print me-2"></i>Print
                         </button>

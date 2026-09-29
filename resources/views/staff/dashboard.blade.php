@@ -16,7 +16,7 @@
                 <div class="card-body">
                     <div class="row align-items-center">
                         <div class="col-md-8">
-                            <h1 class="mb-3">Welcome back, {{ Auth::user()->name }}!</h1>
+                            <h1 class="mb-3">Welcome back, {{ Auth::user()->full_name }}!</h1>
                             <p class="lead mb-0">
                                 {{ now()->format('l, F j, Y') }} • 
                                 <span id="currentTime">{{ now()->format('h:i A') }}</span>
@@ -102,7 +102,12 @@
                         <div>
                             <h6 class="card-title">Pending Tasks</h6>
                             <h2 class="mb-0">{{ $stats['pending_tasks'] }}</h2>
-                            <small class="opacity-75">Require Attention</small>
+                            <small class="opacity-75">
+                                @if (($stats['overdue_tasks'] ?? 0) > 0)
+                                    {{ $stats['overdue_tasks'] }} overdue &middot;
+                                @endif
+                                <a href="{{ route('marketer.tasks.index') }}" class="text-white text-decoration-underline">View my tasks</a>
+                            </small>
                         </div>
                         <div class="stat-icon">
                             <i class="fas fa-tasks"></i>
@@ -132,10 +137,10 @@
                     </div>
                     <div class="mt-2">
                         @php
-                            $daysUntilPayday = \Carbon\Carbon::parse($stats['next_payday_date'])->diffInDays(now());
+                            $paydayProgress = max(0, min(100, ((30 - $stats['days_until_payday']) / 30) * 100));
                         @endphp
                         <div class="progress" style="height: 5px;">
-                            <div class="progress-bar bg-white" style="width: {{ min((30-$daysUntilPayday)/30*100, 100) }}%"></div>
+                            <div class="progress-bar bg-white" style="width: {{ $paydayProgress }}%"></div>
                         </div>
                     </div>
                 </div>
@@ -291,11 +296,13 @@
                                                 <i class="fas fa-eye"></i> View
                                             </a>
                                             @if($leave->status == 'pending')
-                                                <a href="{{ route('staff.leave.cancel', $leave->id) }}" 
-                                                   class="btn btn-sm btn-outline-danger ms-1"
-                                                   onclick="return confirm('Are you sure you want to cancel this leave application?')">
-                                                    <i class="fas fa-times"></i>
-                                                </a>
+                                                <form action="{{ route('staff.leave.cancel', $leave->id) }}" method="POST" class="d-inline"
+                                                      onsubmit="return confirm('Are you sure you want to cancel this leave application?')">
+                                                    @csrf
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger ms-1">
+                                                        <i class="fas fa-times"></i>
+                                                    </button>
+                                                </form>
                                             @endif
                                         </td>
                                     </tr>

@@ -18,7 +18,11 @@ class StaffDashboardController extends Controller
     public function index()
     {
         $staffProfile = Auth::user()->staffProfile;
-        
+
+        // Accounts without a staff profile can't use the staff portal
+        if (!$staffProfile) {
+            return redirect('/')->with('error', 'Your account is not linked to a staff profile.');
+        }        
         // Get today's attendance
         $todayAttendance = $staffProfile->attendanceRecords()
             ->whereDate('date', today())
@@ -105,21 +109,30 @@ public function getChartColor($index)
         // Leave balance (sum of all leave types)
         $leaveBalance = $this->calculateTotalLeaveBalance($staffProfile);
         
-        // Pending tasks
-        // $pendingTasks = Task::where('assigned_to', $staffProfile->id)
-        //     ->where('status', '!=', 'completed')
-        //     ->count();
-        $pendingTasks = 0;
-        // Next payday (assuming 25th of each month)
-        $nextPayday = date('j', strtotime('25th of next month'));
-        $nextPaydayDate = date('F j', strtotime('25th of next month'));
-        
+        // Tasks assigned to this staff member (tasks.marketer_id holds the user's id)
+        $pendingTasks = Task::where('marketer_id', $staffProfile->user_id)
+            ->where('status', '!=', 'completed')
+            ->count();
+        $overdueTasks = Task::where('marketer_id', $staffProfile->user_id)
+            ->where('status', '!=', 'completed')
+            ->where('deadline', '<', now())
+            ->count();
+
+        // Payday is the 25th: this month if not yet passed, otherwise next month
+        $today = today();
+        $payday = $today->day <= 25
+            ? $today->copy()->day(25)
+            : $today->copy()->addMonthNoOverflow()->day(25);
+        $daysUntilPayday = (int) $today->diffInDays($payday);
+
         return [
             'present_days' => $presentDays,
             'leave_balance' => $leaveBalance,
             'pending_tasks' => $pendingTasks,
-            'next_payday' => $nextPayday,
-            'next_payday_date' => $nextPaydayDate,
+            'overdue_tasks' => $overdueTasks,
+            'next_payday' => $payday->format('j'),
+            'next_payday_date' => $payday->format('F j'),
+            'days_until_payday' => $daysUntilPayday,
         ];
     }
     
@@ -241,7 +254,10 @@ public function getChartColor($index)
         ]);
         
         $staffProfile = Auth::user()->staffProfile;
-        
+
+        if (!$staffProfile) {
+            return back()->with('error', 'Your account is not linked to a staff profile.');
+        }        
         if ($request->action === 'clock_in') {
             // Clock in logic
             $today = today();

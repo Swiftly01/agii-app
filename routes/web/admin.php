@@ -61,20 +61,23 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::get('/transactions', [AdminController::class, 'showTransactions'])->name('admin.transactions.index');
 
     // Tasks Management
-    Route::get('/tasks', [AdminController::class, 'showTasks'])->name('admin.tasks.index');
-    Route::get('/tasks/create', [AdminController::class, 'createTask'])->name('admin.tasks.create');
-    Route::post('/tasks', [AdminController::class, 'storeTask'])->name('admin.tasks.store');
+     Route::middleware('admin')->group(function () {
+        // Tasks Management
+        Route::get('/tasks', [AdminController::class, 'showTasks'])->name('admin.tasks.index');
+        Route::get('/tasks/create', [AdminController::class, 'createTask'])->name('admin.tasks.create');
+        Route::post('/tasks', [AdminController::class, 'storeTask'])->name('admin.tasks.store');
     
-    Route::get('/tasks/{task}/edit', [AdminController::class, 'edit'])->name('admin.tasks.edit');
-    Route::put('/tasks/{task}', [AdminController::class, 'update'])->name('admin.tasks.update');
-    Route::delete('/tasks/{task}', [AdminController::class, 'destroy'])->name('admin.tasks.destroy');
-    Route::get('/tasks/{task}', [AdminController::class, 'show'])->name('admin.tasks.show');
+        Route::get('/tasks/{task}/edit', [AdminController::class, 'edit'])->name('admin.tasks.edit');
+        Route::put('/tasks/{task}', [AdminController::class, 'update'])->name('admin.tasks.update');
+        Route::delete('/tasks/{task}', [AdminController::class, 'destroy'])->name('admin.tasks.destroy');
+        Route::get('/tasks/{task}', [AdminController::class, 'show'])->name('admin.tasks.show');
     
-    Route::post('/admin/tasks/store-multiple', [AdminController::class, 'storeMultiple'])->name('admin.tasks.storeMultiple');
+        Route::post('/tasks/store-multiple', [AdminController::class, 'storeMultiple'])->name('admin.tasks.storeMultiple');
    
     
    
-    Route::post('/tasks/{id}/status', [AdminController::class, 'updateTaskStatus'])->name('admin.tasks.update-status');
+        Route::post('/tasks/{id}/status', [AdminController::class, 'updateTaskStatus'])->name('admin.tasks.update-status');
+    });
 
     // Admin Logout
     Route::post('/logout', [AdminController::class, 'logout'])->name('admin.logout');

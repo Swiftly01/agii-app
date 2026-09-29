@@ -164,7 +164,7 @@ class StaffController extends Controller
             );
         }
 
-        return redirect()->route('staff.index')
+        return redirect()->route('admin.staff.index')
             ->with('success', 'Staff member added successfully! Login credentials sent to ' . $request->email);
 
     } catch (\Exception $e) {

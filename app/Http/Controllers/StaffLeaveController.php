@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AttendanceRecord;
 use App\Models\LeaveApplication;
 use App\Models\LeaveType;
 use App\Models\Holiday;
@@ -154,11 +155,13 @@ class StaffLeaveController extends Controller
         }
         
         // Log activity
-        activity()
-            ->performedOn($leaveApplication)
-            ->causedBy(Auth::user())
-            ->log('Applied for ' . $leaveType->name . ' leave from ' . 
-                  $request->start_date . ' to ' . $request->end_date);
+        if (function_exists('activity')) {
+            activity()
+                ->performedOn($leaveApplication)
+                ->causedBy(Auth::user())
+                ->log('Applied for ' . $leaveType->name . ' leave from ' .
+                      $request->start_date . ' to ' . $request->end_date);
+        }
         
         return redirect()->route('staff.leave.dashboard')
             ->with('success', 'Leave application submitted successfully.');
@@ -228,10 +231,12 @@ class StaffLeaveController extends Controller
         
         $leaveApplication->update(['status' => 'cancelled']);
         
-        activity()
-            ->performedOn($leaveApplication)
-            ->causedBy(Auth::user())
-            ->log('Cancelled leave application');
+        if (function_exists('activity')) {
+            activity()
+                ->performedOn($leaveApplication)
+                ->causedBy(Auth::user())
+                ->log('Cancelled leave application');
+        }
         
         return back()->with('success', 'Leave application cancelled successfully.');
     }

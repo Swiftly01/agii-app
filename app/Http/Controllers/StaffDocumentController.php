@@ -34,6 +34,7 @@ class StaffDocumentController extends Controller
         ]);
 
         $staffProfile = Auth::user()->staffProfile;
+        abort_unless($staffProfile, 403, 'Your account is not linked to a staff profile.');
         
         // Upload file
         $file = $request->file('document_file');
@@ -54,7 +55,7 @@ class StaffDocumentController extends Controller
             'status' => 'pending',
         ]);
 
-        return redirect()->route('staff.portal.documents')
+        return redirect()->route('staff.documents.my-documents')
             ->with('success', 'Document uploaded successfully! Waiting for admin approval.');
     }
 
@@ -245,6 +246,9 @@ public function index(Request $request, StaffProfile $staffProfile = null)
     }
 
     $documents = collect($documents)->merge($appFiles);
+        if ($request->filled('type')) {
+            $documents = $documents->where('document_type', $request->type)->values();
+        }
 
     return view(
         'staff-portal.documents.index',
@@ -283,7 +287,7 @@ private function mapApplicationFile(
         $document = StaffDocument::findOrFail($id);
         
         // Check authorization
-        if (Auth::user()->staffProfile->id !== $document->staff_profile_id && !Auth::user()->hasRole('admin')) {
+        if (optional(Auth::user()->staffProfile)->id !== $document->staff_profile_id && !Auth::user()->isAdmin()) {
             abort(403, 'Unauthorized access.');
         }
         
@@ -300,7 +304,7 @@ private function mapApplicationFile(
         $document = StaffDocument::findOrFail($id);
         
         // Check authorization
-        if (Auth::user()->staffProfile->id !== $document->staff_profile_id && !Auth::user()->hasRole('admin')) {
+        if (optional(Auth::user()->staffProfile)->id !== $document->staff_profile_id && !Auth::user()->isAdmin()) {
             abort(403, 'Unauthorized access.');
         }
         
@@ -319,7 +323,7 @@ private function mapApplicationFile(
         $document = StaffDocument::findOrFail($id);
         
         // Check authorization and status
-        if (Auth::user()->staffProfile->id !== $document->staff_profile_id || $document->status !== 'pending') {
+        if (optional(Auth::user()->staffProfile)->id !== $document->staff_profile_id || $document->status !== 'pending') {
             abort(403, 'Unauthorized action.');
         }
         
@@ -328,7 +332,18 @@ private function mapApplicationFile(
         
         $document->delete();
         
-        return redirect()->route('staff.portal.documents')
+        return redirect()->route('staff.documents.my-documents')
             ->with('success', 'Document deleted successfully.');
+    }
+
+    // Sidebar shortcuts -> my documents, pre-filtered by type
+    public function certificates()
+    {
+        return redirect()->route('staff.documents.my-documents', ['type' => 'certificate']);
+    }
+
+    public function contracts()
+    {
+        return redirect()->route('staff.documents.my-documents', ['type' => 'contract']);
     }
 }
