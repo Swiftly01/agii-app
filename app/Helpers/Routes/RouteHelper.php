@@ -8,24 +8,23 @@ class RouteHelper
 {
     public static function includeRouteFiles(string $folder)
     {
-        // iterate thru the v1 folder recursively
-        $dirIterator = new \RecursiveDirectoryIterator($folder);
+        $files = [];
 
-        /** @var \RecursiveDirectoryIterator | \RecursiveIteratorIterator $it */
-        $it = new \RecursiveIteratorIterator($dirIterator);
+        $it = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($folder, \FilesystemIterator::SKIP_DOTS)
+        );
 
-        // require the file in each iteration
-        while ($it->valid()) {
-            if (
-                !$it->isDot()
-                && $it->isFile()
-                && $it->isReadable()
-                && $it->current()->getExtension() === 'php'
-            ) {
-                require $it->key();
-                //                require $it->current()->getPathname();
+        foreach ($it as $file) {
+            if ($file->isFile() && $file->isReadable() && $file->getExtension() === 'php') {
+                $files[] = $file->getPathname();
             }
-            $it->next();
+        }
+
+        // Sorted, so route registration order is the same on every OS / server
+        sort($files);
+
+        foreach ($files as $path) {
+            require $path;
         }
     }
 }

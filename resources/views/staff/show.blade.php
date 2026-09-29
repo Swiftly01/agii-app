@@ -7,8 +7,8 @@
             <h1>Staff Profile</h1>
         </div>
         <div class="col-md-6 text-end">
-            <a href="{{ route('staff.index') }}" class="btn btn-secondary">Back to List</a>
-            <a href="{{ route('staff.edit', $staff->id) }}" class="btn btn-primary">Edit Profile</a>
+            <a href="{{ route('admin.staff.index') }}" class="btn btn-secondary">Back to List</a>
+            <a href="{{ route('admin.staff.edit-from-application', $staff->employment_application_id) }}" class="btn btn-primary">Edit Profile</a>
         </div>
     </div>
 

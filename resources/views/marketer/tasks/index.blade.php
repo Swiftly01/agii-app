@@ -867,13 +867,14 @@
                 const formData = new FormData();
                 formData.append('_token', '{{ csrf_token() }}');
                 formData.append('status', status);
-                formData.append('progress', status === 'completed' ? 100 : 50);
+                // progress is left untouched (the server sets 100 for completed)
                 formData.append('status_notes', 'Quick update via dashboard');
                 
                 fetch(`/marketer/tasks/${taskId}/status`, {
                     method: 'POST',
                     headers: {
-                        'X-Requested-With': 'XMLHttpRequest'
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
                     },
                     body: formData
                 })
@@ -898,19 +899,32 @@
         // Show quick notes modal
         function showQuickNotes(taskId) {
             document.getElementById('notesTaskId').value = taskId;
+            document.getElementById('quickNotesForm').action =
+                "{{ route('marketer.tasks.add-note', ['task' => '__ID__']) }}".replace('__ID__', taskId);
             const modal = new bootstrap.Modal(document.getElementById('quickNotesModal'));
             modal.show();
         }
         
         // Update progress
         function updateProgress(taskId) {
-            fetch(`/marketer/tasks/${taskId}`)
-                .then(response => response.json())
+            fetch(`/marketer/tasks/${taskId}`, {
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+                .then(response => {
+                    if (!response.ok) throw new Error('HTTP ' + response.status);
+                    return response.json();
+                })
                 .then(data => {
                     document.getElementById('progressTaskId').value = taskId;
                     document.getElementById('currentProgress').value = data.progress;
                     document.getElementById('progressSlider').value = data.progress;
                     document.getElementById('progressValue').textContent = data.progress + '%';
+                    document.getElementById('progressSlider').oninput = function () {
+                        document.getElementById('progressValue').textContent = this.value + '%';
+                    };
                     
                     const modal = new bootstrap.Modal(document.getElementById('progressModal'));
                     modal.show();
@@ -934,9 +948,12 @@
         
         // Export functionality
         function exportTasks(format) {
+            if (format === 'print') {
+                window.print();
+                return;
+            }
             const params = new URLSearchParams(window.location.search);
-            params.append('format', format);
-            
+            params.set('format', 'csv');
             window.location.href = `{{ route('marketer.tasks.index') }}?${params.toString()}`;
         }
         

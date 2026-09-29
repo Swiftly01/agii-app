@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Category;
+use App\Models\Marketer;
 use App\Models\User;
 use App\Models\Product;
 use App\Models\Transaction;
@@ -782,13 +783,15 @@ class AdminController extends Controller
 
         $task = Task::findOrFail($id);
 
+        $state = Task::reconcile($request->status, (int) $request->progress);
+
         // Prepare update data
         $updateData = [
             'title' => $request->title,
             'description' => $request->description,
             'priority' => $request->priority,
-            'status' => $request->status,
-            'progress' => $request->progress,
+            'status' => $state['status'],
+            'progress' => $state['progress'],
             'target_leads' => $request->target_leads,
             'target_conversion' => $request->target_conversion,
         ];
@@ -962,9 +965,10 @@ class AdminController extends Controller
 
         $task = Task::findOrFail($id);
 
+        $state = Task::reconcile($request->status, (int) ($request->progress ?? $task->progress));
         $task->update([
-            'status' => $request->status,
-            'progress' => $request->progress ?? $task->progress,
+            'status' => $state['status'],
+            'progress' => $state['progress'],
             'notes' => $request->filled('status_notes')
                 ? ($task->notes ? $task->notes . "\n\nStatus Update [" . now()->format('Y-m-d H:i') . "]: " . $request->status_notes
                     : "Status Update [" . now()->format('Y-m-d H:i') . "]: " . $request->status_notes)
@@ -976,6 +980,7 @@ class AdminController extends Controller
             'message' => 'Task status updated successfully.'
         ]);
     }
+
 
 
     /**
@@ -992,15 +997,10 @@ class AdminController extends Controller
         $task = Task::where('marketer_id', Auth::id())
             ->findOrFail($request->task_id);
 
-        // Update progress
-        $task->progress = $request->progress;
-
-        // Auto-update status
-        if ($request->progress == 100) {
-            $task->status = 'completed';
-        } elseif ($request->progress > 0 && $task->status == 'pending') {
-            $task->status = 'in_progress';
-        }
+        // Update progress (status is derived from progress)
+        $state = Task::reconcile(null, (int) $request->progress, $task->status);
+        $task->progress = $state['progress'];
+        $task->status = $state['status'];
 
         // Add note if provided
         if ($request->filled('notes')) {
@@ -1052,7 +1052,7 @@ class AdminController extends Controller
         $task->is_overdue = $task->deadline < now() && $task->status != 'completed';
         $task->days_remaining = now()->diffInDays($task->deadline, false);
         $task->days_remaining_text = $task->days_remaining == 0 ? 'Today' : ($task->days_remaining > 0 ? $task->days_remaining . ' days left' :
-                abs($task->days_remaining) . ' days ago');
+            abs($task->days_remaining) . ' days ago');
 
         // Parse notes into array for display
         $notes = $task->notes ? array_filter(explode("\n\n", $task->notes)) : [];
@@ -1083,8 +1083,7 @@ class AdminController extends Controller
                 : $newNote
         ]);
 
-        return redirect()->route('marketer.tasks.show', $task->id)
-            ->with('success', 'Note added successfully.');
+        return back()->with('success', 'Note added successfully.');
     }
 
     /**
@@ -1096,15 +1095,19 @@ class AdminController extends Controller
 
         $request->validate([
             'status' => 'required|in:pending,in_progress,completed',
-            'progress' => 'required|integer|min:0|max:100',
+            'progress' => 'nullable|integer|min:0|max:100',
             'status_notes' => 'nullable|string|max:500'
         ]);
 
         $task = Task::where('marketer_id', $user->id)->findOrFail($id);
 
+        $state = Task::reconcile(
+            $request->status,
+            $request->filled('progress') ? (int) $request->progress : (int) $task->progress
+        );
         $updateData = [
-            'status' => $request->status,
-            'progress' => $request->progress,
+            'status' => $state['status'],
+            'progress' => $state['progress'],
         ];
 
         // Add status notes
@@ -1118,6 +1121,15 @@ class AdminController extends Controller
         }
 
         $task->update($updateData);
+
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Task status updated successfully.',
+                'status' => $task->status,
+                'progress' => (int) $task->progress,
+            ]);
+        }
 
         return redirect()->route('marketer.tasks.show', $task->id)
             ->with('success', 'Task status updated successfully.');
@@ -1236,6 +1248,11 @@ class AdminController extends Controller
             END
         ")
                 ->orderBy('deadline', 'asc');
+        }
+
+        // CSV export of the current (filtered) list
+        if ($request->get('format') === 'csv') {
+            return $this->exportMarketerTasksCsv($query->get());
         }
 
         // Get paginated results
@@ -1359,6 +1376,31 @@ class AdminController extends Controller
             'defaultDateFrom',
             'defaultDateTo'
         ));
+    }
+
+    private function exportMarketerTasksCsv($tasks)
+    {
+        $safe = fn($v) => (is_string($v) && preg_match('/^[=+\-@]/', $v)) ? "'" . $v : $v;
+
+        return response()->streamDownload(function () use ($tasks, $safe) {
+            $out = fopen('php://output', 'w');
+            fwrite($out, "\xEF\xBB\xBF"); // UTF-8 BOM so Excel reads it correctly
+            fputcsv($out, ['Title', 'Priority', 'Status', 'Progress %', 'Deadline', 'Assigned By', 'Target Leads', 'Target Conversion', 'Created']);
+            foreach ($tasks as $t) {
+                fputcsv($out, [
+                    $safe($t->title),
+                    $t->priority,
+                    $t->status,
+                    (int) $t->progress,
+                    $t->deadline ? $t->deadline->format('Y-m-d H:i') : '',
+                    $safe($t->assignby_name ?? optional($t->assigner)->full_name ?? ''),
+                    $t->target_leads,
+                    $t->target_conversion,
+                    $t->created_at ? $t->created_at->format('Y-m-d H:i') : '',
+                ]);
+            }
+            fclose($out);
+        }, 'my-tasks-' . now()->format('Y-m-d') . '.csv', ['Content-Type' => 'text/csv; charset=UTF-8']);
     }
     /**
      * Get statistics for a specific marketer

@@ -220,4 +220,34 @@ class Task extends Model
             get: fn () => $this->status !== 'completed'
         );
     }
+
+    /**
+     * Keep status and progress consistent.
+     *
+     * - $status === null  : progress-only update; status is derived from progress
+     * - status completed  : progress forced to 100
+     * - any other status  : progress can never be 100 (capped at 99)
+     */
+    public static function reconcile(?string $status, int $progress, string $currentStatus = 'pending'): array
+    {
+        $progress = max(0, min(100, $progress));
+
+        if ($status === null) {
+            $status = $currentStatus;
+            if ($progress === 100) {
+                $status = 'completed';
+            } elseif ($progress > 0 && $status === 'pending') {
+                $status = 'in_progress';
+            } elseif ($progress < 100 && $status === 'completed') {
+                $status = 'in_progress';
+            }
+            return ['status' => $status, 'progress' => $progress];
+        }
+
+        if ($status === 'completed') {
+            return ['status' => 'completed', 'progress' => 100];
+        }
+
+        return ['status' => $status, 'progress' => min($progress, 99)];
+    }
 }

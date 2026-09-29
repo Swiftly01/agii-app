@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Route;
 */
 use App\Http\Controllers\StaffController;
 use App\Http\Controllers\StaffDashboardController;
-use App\Http\Controllers\StaffProfileController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\StaffAttendanceController;
 use App\Http\Controllers\StaffLeaveController;
 use App\Http\Controllers\StaffDocumentController;
@@ -39,14 +39,16 @@ Route::middleware(['auth'])
 
     // Dashboard
     Route::get('/dashboard', [StaffDashboardController::class, 'index'])->name('dashboard');
-    Route::post('/clock', [StaffDashboardController::class, 'clock'])->name('attendance.clock');
+    // Legacy dashboard clock endpoint. The dashboard forms use staff.attendance.clock below.
+    Route::post('/clock', [StaffDashboardController::class, 'clock'])->name('clock');
 
     // Profile
     Route::prefix('profile')->name('profile.')->group(function () {
-        Route::get('/', [StaffProfileController::class, 'view'])->name('view');
-        Route::get('/edit', [StaffProfileController::class, 'edit'])->name('edit');
-        Route::put('/update', [StaffProfileController::class, 'update'])->name('update');
-        Route::get('/documents', [StaffProfileController::class, 'documents'])->name('documents');
+        // StaffProfileController was never created; reuse the shared profile page for now
+        Route::get('/', [ProfileController::class, 'edit'])->name('view');
+        Route::get('/edit', [ProfileController::class, 'edit'])->name('edit');
+        Route::put('/update', [ProfileController::class, 'update'])->name('update');
+        Route::get('/documents', [StaffDocumentController::class, 'index'])->name('documents');
     });
 
     // Attendance
@@ -74,7 +76,7 @@ Route::middleware(['auth'])
         Route::get('/certificates', [StaffDocumentController::class, 'certificates'])->name('certificates');
         Route::get('/contracts', [StaffDocumentController::class, 'contracts'])->name('contracts');
         Route::get('/{id}/download', [StaffDocumentController::class, 'download'])->name('download');
-        Route::get('/{id}/view', [StaffDocumentController::class, 'view'])->name('view');
+        Route::get('/{id}/view', [StaffDocumentController::class, 'preview'])->name('view');
     });
 
     // Offer Letters
@@ -85,7 +87,7 @@ Route::middleware(['auth'])
     });
 });
 
-Route::get('/admin/staff/{staffProfile}/documents', [StaffDocumentController::class, 'index'])->name('admin.staff.documents');
+Route::middleware(['auth', 'admin'])->get('/admin/staff/{staffProfile}/documents', [StaffDocumentController::class, 'index'])->name('admin.staff.documents');
 
 
 /*
@@ -93,7 +95,7 @@ Route::get('/admin/staff/{staffProfile}/documents', [StaffDocumentController::cl
 | ADMIN – STAFF MANAGEMENT (NO COLLISIONS)
 |--------------------------------------------------------------------------
 */
-Route::middleware(['auth'])
+Route::middleware(['auth', 'admin'])
     ->prefix('admin/staff')
     ->name('admin.staff.')
     ->group(function () {
@@ -101,13 +103,13 @@ Route::middleware(['auth'])
     Route::get('/', [StaffController::class, 'index'])->name('index');
     Route::get('/create-from-application/{id}', [StaffController::class, 'createFromApplication'])->name('create-from-application');
     Route::post('/', [StaffController::class, 'store'])->name('store');
-    // Route::get('/{id}', [StaffController::class, 'show'])->name('show');
+    Route::get('/{id}', [StaffController::class, 'show'])->name('show');
     // Route::get('/{id}/edit', [StaffController::class, 'edit'])->name('edit');
     // Route::put('/{id}', [StaffController::class, 'update'])->name('update');
     
 });
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'admin'])->group(function () {
 // In your web.php routes file
 Route::get('admin/staff/{id}/edit-from-application', [StaffController::class, 'editFromApplication'])->name('admin.staff.edit-from-application');
 Route::put('admin/staff/update-from-application/{id}', [StaffController::class, 'updateFromApplication'])->name('admin.staff.update-from-application');
@@ -120,7 +122,7 @@ Route::put('admin/staff/update-from-application/{id}', [StaffController::class, 
 | ADMIN – DOCUMENT MANAGEMENT
 |--------------------------------------------------------------------------
 */
-Route::middleware(['auth'])
+Route::middleware(['auth', 'admin'])
     ->prefix('admin')
     ->name('admin.')
     ->group(function () {
@@ -142,7 +144,7 @@ Route::middleware(['auth'])
 | ADMIN – OFFER LETTERS
 |--------------------------------------------------------------------------
 */
-Route::middleware(['auth'])
+Route::middleware(['auth', 'admin'])
     ->prefix('admin/offer-letters')
     ->name('admin.offer-letters.')
     ->group(function () {

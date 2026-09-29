@@ -122,10 +122,12 @@ class StaffAttendanceController extends Controller
         );
         
         // Log activity
-        activity()
+        if (function_exists('activity')) {
+            activity()
             ->performedOn($attendance)
             ->causedBy(Auth::user())
             ->log('Clocked in at ' . $now->format('h:i A'));
+        }
         
         return back()->with('success', 'Clocked in successfully at ' . $now->format('h:i A'));
     }
@@ -173,10 +175,12 @@ class StaffAttendanceController extends Controller
         ]);
         
         // Log activity
-        activity()
+        if (function_exists('activity')) {
+            activity()
             ->performedOn($attendance)
             ->causedBy(Auth::user())
             ->log('Clocked out at ' . $now->format('h:i A') . ', worked ' . round($hoursWorked, 2) . ' hours');
+        }
         
         return back()->with('success', 'Clocked out successfully. Worked ' . round($hoursWorked, 2) . ' hours today.');
     }
