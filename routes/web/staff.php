@@ -104,8 +104,8 @@ Route::middleware(['auth', 'admin'])
     Route::get('/create-from-application/{id}', [StaffController::class, 'createFromApplication'])->name('create-from-application');
     Route::post('/', [StaffController::class, 'store'])->name('store');
     Route::get('/{id}', [StaffController::class, 'show'])->name('show');
-    // Route::get('/{id}/edit', [StaffController::class, 'edit'])->name('edit');
-    // Route::put('/{id}', [StaffController::class, 'update'])->name('update');
+    Route::get('/{id}/edit', [StaffController::class, 'edit'])->name('edit');
+    Route::put('/{id}', [StaffController::class, 'update'])->name('update');
     
 });
 
