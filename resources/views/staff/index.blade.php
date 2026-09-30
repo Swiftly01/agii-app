@@ -58,7 +58,7 @@
                                 <a href="{{ route('admin.staff.show', $member->id) }}" class="btn btn-sm btn-info">
                                     View
                                 </a>
-                                <a href="{{ route('admin.staff.edit-from-application', $member->employment_application_id) }}" class="btn btn-sm btn-primary">
+                                <a href="{{ route('admin.staff.edit', $member->id) }}" class="btn btn-sm btn-primary">
                                     Edit
                                 </a>
                             </td>
