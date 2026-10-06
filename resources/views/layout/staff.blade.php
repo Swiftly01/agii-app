@@ -17,10 +17,70 @@
     <link href="{{ asset('css/staff.css') }}" rel="stylesheet">
     
     @stack('styles')
+
+    <!-- Responsive sidebar (off-canvas below 992px) -->
+    <style>
+        .sidebar-backdrop { display: none; }
+
+        /* Sidebar is an off-canvas drawer at every screen size: closed on load, opened with the menu button */
+        @media all {
+            /* Sidebar hidden off-canvas by default; `.active` = open on small screens */
+            #sidebar.sidebar {
+                position: fixed !important;
+                top: 0;
+                left: 0;
+                bottom: 0;
+                width: 280px !important;
+                max-width: 85vw;
+                min-width: 0 !important;
+                margin-left: 0 !important;
+                transform: translateX(-100%) !important;
+                transition: transform .3s ease;
+                z-index: 1045;
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+                box-shadow: none;
+            }
+            #sidebar.sidebar.active {
+                transform: translateX(0) !important;
+                box-shadow: 0 0 25px rgba(0, 0, 0, .35);
+            }
+
+            /* Content always takes the full width on small screens */
+            #content.content {
+                width: 100% !important;
+                margin-left: 0 !important;
+                padding-left: 0 !important;
+                min-width: 0;
+            }
+
+            .sidebar-backdrop {
+                display: block;
+                position: fixed;
+                inset: 0;
+                background: rgba(0, 0, 0, .5);
+                opacity: 0;
+                visibility: hidden;
+                transition: opacity .3s ease, visibility .3s ease;
+                z-index: 1040;
+            }
+            .sidebar-backdrop.show { opacity: 1; visibility: visible; }
+
+            body.sidebar-open { overflow: hidden; }
+        }
+
+        @media (max-width: 575.98px) {
+            #content .main-content > .container-fluid { padding-left: .75rem; padding-right: .75rem; }
+            #content .footer .text-end { text-align: left !important; margin-top: .5rem; }
+        }
+    </style>
 </head>
 <body class="bg-light">
     <!-- Wrapper -->
     <div class="wrapper">
+        <!-- Mobile backdrop -->
+        <div id="sidebarBackdrop" class="sidebar-backdrop"></div>
+
         <!-- Sidebar -->
         <nav id="sidebar" class="sidebar">
             <div class="sidebar-header">
@@ -634,28 +694,58 @@
             const sidebarToggle = document.getElementById('sidebarToggle');
             const sidebarCollapse = document.getElementById('sidebarCollapse');
             
+            const backdrop = document.getElementById('sidebarBackdrop');
+            const MOBILE_MAX = 991.98;
+            const isMobile = () => true; // drawer behaviour at all sizes
+
+            function syncMobileState() {
+                const open = isMobile() && sidebar.classList.contains('active');
+                backdrop.classList.toggle('show', open);
+                document.body.classList.toggle('sidebar-open', open);
+            }
+
             // Toggle sidebar on button click
             function toggleSidebar() {
                 sidebar.classList.toggle('active');
                 content.classList.toggle('active');
+                syncMobileState();
             }
-            
+
+            function closeSidebar() {
+                sidebar.classList.remove('active');
+                content.classList.remove('active');
+                syncMobileState();
+            }
+
             sidebarToggle.addEventListener('click', toggleSidebar);
             sidebarCollapse.addEventListener('click', toggleSidebar);
-            
-            // Close sidebar on mobile when clicking outside
-            document.addEventListener('click', function(event) {
-                const isClickInsideSidebar = sidebar.contains(event.target);
-                const isClickOnToggle = sidebarToggle.contains(event.target);
-                
-                if (window.innerWidth <= 768 && !isClickInsideSidebar && !isClickOnToggle && sidebar.classList.contains('active')) {
-                    toggleSidebar();
+            backdrop.addEventListener('click', closeSidebar);
+
+            // Close with Escape on mobile
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && isMobile() && sidebar.classList.contains('active')) closeSidebar();
+            });
+
+            // Close sidebar on mobile after tapping a real link
+            sidebar.querySelectorAll('a[href]:not([data-bs-toggle])').forEach(link => {
+                link.addEventListener('click', function() {
+                    if (isMobile()) closeSidebar();
+                });
+            });
+
+            // Reset state when crossing the mobile/desktop breakpoint
+            let wasMobile = isMobile();
+            window.addEventListener('resize', function() {
+                const nowMobile = isMobile();
+                if (nowMobile !== wasMobile) {
+                    closeSidebar();
+                    wasMobile = nowMobile;
                 }
             });
-            
+
             // Auto-collapse submenus on mobile
             function handleResize() {
-                if (window.innerWidth <= 768) {
+                if (window.innerWidth <= 991.98) {
                     // Collapse all submenus on mobile
                     const submenus = document.querySelectorAll('.components .collapse');
                     submenus.forEach(submenu => {

@@ -1,0 +1,97 @@
+# robots.txt for https://agii.ng/
+# Agii - Buy and Sell Anything in Nigeria (classifieds marketplace)
+
+User-agent: *
+
+# --- Crawlable: money pages and assets ---
+Allow: /
+Allow: /product/
+Allow: /products
+Allow: /services
+Allow: /store-around-me
+Allow: /about
+Allow: /faq
+Allow: /contact
+Allow: /product-images/
+Allow: /images/
+Allow: /css/
+Allow: /js/
+Allow: /build/
+
+# --- Account / auth pages (no search value) ---
+Disallow: /login
+Disallow: /register
+Disallow: /logout
+Disallow: /password/
+Disallow: /forgot-password
+Disallow: /reset-password
+Disallow: /user/
+Disallow: /account/
+Disallow: /dashboard
+Disallow: /vendor/
+Disallow: /seller/
+Disallow: /affiliate
+
+# --- Transactional / private areas ---
+Disallow: /cart
+Disallow: /checkout
+Disallow: /orders
+Disallow: /wishlist
+Disallow: /messages
+Disallow: /notifications
+
+# --- Back-end / system ---
+Disallow: /admin
+Disallow: /api/
+Disallow: /storage/
+Disallow: /livewire/
+Disallow: /_debugbar/
+
+# --- Faceted navigation / duplicate parameter URLs (crawl-budget control) ---
+Disallow: /*?*sort=
+Disallow: /*?*sort_by=
+Disallow: /*?*price_min=
+Disallow: /*?*price_max=
+Disallow: /*?*min_price=
+Disallow: /*?*max_price=
+Disallow: /*?*condition=
+Disallow: /*?*negotiable=
+Disallow: /*?*location=
+Disallow: /*?*state=
+Disallow: /*?*category=
+Disallow: /*?*q=
+Disallow: /*?*search=
+Disallow: /*?*utm_
+Disallow: /*?*fbclid=
+Disallow: /*?*gclid=
+Disallow: /*?*ref=
+
+# Note: ?page=N pagination is intentionally NOT blocked so deeper listings can be discovered.
+
+# --- Search-engine bots: ensure CSS/JS/images are never blocked ---
+User-agent: Googlebot
+Allow: /css/
+Allow: /js/
+Allow: /build/
+Allow: /images/
+Allow: /product-images/
+
+User-agent: Googlebot-Image
+Allow: /images/
+Allow: /product-images/
+
+# --- Aggressive SEO/scraper bots (reduce server load) ---
+User-agent: AhrefsBot
+Crawl-delay: 10
+
+User-agent: SemrushBot
+Crawl-delay: 10
+
+User-agent: MJ12bot
+Disallow: /
+
+User-agent: DotBot
+Disallow: /
+
+# --- Sitemap ---
+Sitemap: https://agii.ng/sitemap.xml
