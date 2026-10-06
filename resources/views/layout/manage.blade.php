@@ -2,6 +2,7 @@
 <html lang="en">
 
 <head>
+      @include('layout.components.analytics')
     <title>Manage Products & Services - Agii Vendor</title>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">

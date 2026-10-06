@@ -2,6 +2,7 @@
 <html lang="en">
 
 <head>
+      @include('layout.components.analytics')
     <title>Agii @yield('title')</title>
 
     <meta charset="utf-8">
