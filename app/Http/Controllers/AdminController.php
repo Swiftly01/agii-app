@@ -75,31 +75,36 @@ class AdminController extends Controller
 
     public function approveProduct(Request $request, $id)
     {
-        $request->validate([
-            'status' => 'required|in:active,inactive',
+        $validated = $request->validate([
+            'status' => 'required|in:active,inactive,rejected',
             'rejection_reason' => 'nullable|string|max:500',
         ]);
 
         $product = Product::findOrFail($id);
 
-        if ($request->status === 'active') {
+        if ($validated['status'] === 'active') {
             $product = $this->productApproval->approve($product, Auth::user());
         } else {
             $product = $this->productApproval->reject(
                 $product,
                 Auth::user(),
-                $request->input('rejection_reason') ?: 'Rejected by admin.'
+                $validated['rejection_reason'] ?? null ?: 'Rejected by admin.'
             );
         }
 
-        return redirect()->back()->with(['success', 'Product status updated successfully']);
+        $message = 'Product status updated successfully.';
 
-        // return response()->json([
-        //     'success' => true,
-        //     'message' => 'Product status updated successfully.',
-        //     'status' => $product->status,
-        //     'status_label' => ucfirst($product->status),
-        // ]);
+        // The admin pages call this with fetch() and read response.json().
+        if ($request->expectsJson() || $request->isJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'status' => $product->status,
+                'status_label' => ucfirst($product->status),
+            ]);
+        }
+
+        return redirect()->back()->with('success', $message);
     }
 
     /**

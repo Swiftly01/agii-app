@@ -52,7 +52,7 @@ class Product extends Model
         'views' => 'integer',
         'boost_expires_at' => 'datetime',
         'reviewed_at' => 'datetime',
-
+        'buyers_notified_at' => 'datetime',
     ];
 
     // Relationships
