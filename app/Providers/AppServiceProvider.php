@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Models\Product;
+use App\Observers\ProductObserver;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Event;
@@ -24,7 +26,10 @@ class AppServiceProvider extends ServiceProvider
     {
         Paginator::useBootstrapFive();
 
+        Product::observe(ProductObserver::class);
+
         $this->registerApprovalListeners();
+        $this->registerNotificationListeners();
     }
 
     /**
@@ -53,6 +58,18 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(
             \App\Events\ProductRejected::class,
             \App\Listeners\SendProductRejectionNotification::class,
+        );
+    }
+
+    /**
+     * Buyer-facing notifications. New notification triggers go here: map a
+     * domain event to a listener that sends an AppNotification subclass.
+     */
+    protected function registerNotificationListeners(): void
+    {
+        Event::listen(
+            \App\Events\ProductPublished::class,
+            \App\Listeners\NotifyBuyersOfNewProduct::class,
         );
     }
 }

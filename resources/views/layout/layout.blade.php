@@ -348,6 +348,13 @@
                                     <li><a class="dropdown-item" href="/register">Register</a></li>
                                     @else
                                     <li><a class="dropdown-item" href="{{ route('profile.edit') }}">My Profile</a></li>
+                                    @if (auth()->user()->isCustomer() && config('webpush.vapid.public_key'))
+                                    <li>
+                                        <a class="dropdown-item" href="#" data-push-toggle data-push-state="off">
+                                            Push notifications: <span data-push-toggle-label>Off</span>
+                                        </a>
+                                    </li>
+                                    @endif
                                     <li>
                                         <a class="dropdown-item" href="{{ auth()->user() ? '/logout' : '/login' }}">
                                             {{ auth()->user() ? 'Logout' : 'Login' }}
@@ -631,6 +638,8 @@
         });
     })();
             </script>
+
+            @include('components.push-opt-in')
 
             @stack('scripts')
         </body>

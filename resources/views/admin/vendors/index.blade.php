@@ -9,8 +9,9 @@
             <div class="row align-items-center">
                 <div class="col-md-6">
                     <h6 class="card-title mb-0">All Vendors</h6>
-                    @if($pendingCount > 0)
-                        <a href="{{ route('admin.vendors.index', ['vendor_status' => 'pending']) }}" class="badge bg-warning text-dark text-decoration-none">
+                    @if ($pendingCount > 0)
+                        <a href="{{ route('admin.vendors.index', ['vendor_status' => 'pending']) }}"
+                            class="badge bg-warning text-dark text-decoration-none">
                             {{ $pendingCount }} awaiting approval
                         </a>
                     @endif
@@ -48,9 +49,12 @@
                     <div class="col-md-3">
                         <select name="vendor_status" class="form-select" onchange="this.form.submit()">
                             <option value="">All Approval States</option>
-                            <option value="pending" {{ request('vendor_status') == 'pending' ? 'selected' : '' }}>Pending Approval</option>
-                            <option value="approved" {{ request('vendor_status') == 'approved' ? 'selected' : '' }}>Approved</option>
-                            <option value="rejected" {{ request('vendor_status') == 'rejected' ? 'selected' : '' }}>Rejected</option>
+                            <option value="pending" {{ request('vendor_status') == 'pending' ? 'selected' : '' }}>Pending
+                                Approval</option>
+                            <option value="approved" {{ request('vendor_status') == 'approved' ? 'selected' : '' }}>Approved
+                            </option>
+                            <option value="rejected" {{ request('vendor_status') == 'rejected' ? 'selected' : '' }}>Rejected
+                            </option>
                         </select>
                     </div>
                     <div class="col-md-3">
@@ -132,25 +136,30 @@
                                     </td>
                                     <td>
                                         @php $vs = \App\Enums\VendorStatus::tryFrom($vendor->vendor_status ?? ''); @endphp
-                                        @if($vs)
+                                        @if ($vs)
                                             <span class="badge {{ $vs->badgeClass() }}">{{ $vs->label() }}</span>
                                         @else
                                             <span class="badge bg-secondary">N/A</span>
                                         @endif
-                                        @if($vendor->vendor_status === 'pending')
-                                            <div class="btn-group btn-group-sm mt-1" role="group">
-                                                <form action="{{ route('admin.vendors.approve', $vendor->id) }}" method="POST" onsubmit="return confirm('Approve this vendor?');">
+                                        <div class="btn-group btn-group-sm mt-1" role="group">
+                                            @if ($vendor->vendor_status !== 'approved')
+                                                <form action="{{ route('admin.vendors.approve', $vendor->id) }}"
+                                                    method="POST" onsubmit="return confirm('Approve this vendor?');">
                                                     @csrf
-                                                    <button type="submit" class="btn btn-sm btn-success" title="Approve Vendor">
+                                                    <button type="submit" class="btn btn-sm btn-success"
+                                                        title="Approve Vendor">
                                                         <i class="fas fa-check"></i>
                                                     </button>
                                                 </form>
-                                                <button type="button" class="btn btn-sm btn-outline-danger" title="Reject Vendor"
+                                            @endif
+                                            @if ($vendor->vendor_status !== 'rejected')
+                                                <button type="button" class="btn btn-sm btn-outline-danger"
+                                                    title="Reject Vendor"
                                                     onclick="openVendorRejectModal({{ $vendor->id }})">
                                                     <i class="fas fa-times"></i>
                                                 </button>
-                                            </div>
-                                        @endif
+                                            @endif
+                                        </div>
                                     </td>
                                     <td>
                                         {{ $vendor->created_at->format('M d, Y') }}
@@ -275,23 +284,25 @@
         }
     </script>
     <script>
-    function exportTableToCSV(filename) {
-        const table = document.getElementById("myTable");
-        let csv = [];
-    
-        for (let row of table.rows) {
-            let cols = [];
-            for (let cell of row.cells) {
-                cols.push('"' + cell.innerText.replace(/"/g, '""') + '"');
+        function exportTableToCSV(filename) {
+            const table = document.getElementById("myTable");
+            let csv = [];
+
+            for (let row of table.rows) {
+                let cols = [];
+                for (let cell of row.cells) {
+                    cols.push('"' + cell.innerText.replace(/"/g, '""') + '"');
+                }
+                csv.push(cols.join(","));
             }
-            csv.push(cols.join(","));
+
+            const csvFile = new Blob([csv.join("\n")], {
+                type: "text/csv"
+            });
+            const link = document.createElement("a");
+            link.download = filename;
+            link.href = window.URL.createObjectURL(csvFile);
+            link.click();
         }
-    
-        const csvFile = new Blob([csv.join("\n")], { type: "text/csv" });
-        const link = document.createElement("a");
-        link.download = filename;
-        link.href = window.URL.createObjectURL(csvFile);
-        link.click();
-    }
     </script>
 @endpush
