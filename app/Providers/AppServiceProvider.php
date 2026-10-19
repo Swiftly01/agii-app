@@ -2,8 +2,10 @@
 
 namespace App\Providers;
 
+use App\Contracts\SmsGateway;
 use App\Models\Product;
 use App\Observers\ProductObserver;
+use App\Services\Sms\SmsManager;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Event;
@@ -16,7 +18,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // Controllers and channels depend on the contract, the manager picks the configured provider
+        $this->app->singleton(SmsGateway::class, fn ($app) => new SmsManager($app));
     }
 
     /**

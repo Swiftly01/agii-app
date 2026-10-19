@@ -47,6 +47,7 @@ class User extends Authenticatable
         'newsletter_subscribed',
         'terms_accepted',
         'email_verified_at',
+        'phone_verified_at',
         'vendor_approved_at',
         'vendor_approved_by',
         'vendor_rejection_reason'
@@ -71,6 +72,7 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
+            'phone_verified_at' => 'datetime',
             'vendor_approved_at' => 'datetime',
             'password' => 'hashed',
             'newsletter_subscribed' => 'boolean',
@@ -92,6 +94,22 @@ class User extends Authenticatable
     public function hasPassword(): bool
     {
         return ! is_null($this->password);
+    }
+
+    public function hasVerifiedPhone(): bool
+    {
+        return ! is_null($this->phone_verified_at);
+    }
+
+    // Phone-only accounts must confirm their number before using the app
+    public function requiresPhoneVerification(): bool
+    {
+        return is_null($this->email) && filled($this->phone) && ! $this->hasVerifiedPhone();
+    }
+
+    public function routeNotificationForSms(): ?string
+    {
+        return $this->phone;
     }
 
     public function isGoogleAccount(): bool

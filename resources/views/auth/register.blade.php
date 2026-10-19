@@ -56,12 +56,12 @@
 
                             <div class="form-section">
                                 <div class="mb-3">
-                                    <label for="loginEmail" class="form-label fw-semibold required-field">Email
-                                        Address</label>
-                                    <input type="email" class="form-control" id="loginEmail" name="email"
-                                        placeholder="Enter your email address" required value="{{ old('email') }}">
+                                    <label for="loginEmail" class="form-label fw-semibold required-field">Email or
+                                        Phone Number</label>
+                                    <input type="text" class="form-control" id="loginEmail" name="email"
+                                        placeholder="Enter your email or phone number" required value="{{ old('email') }}">
                                     <div class="validation-message" id="loginEmailError">Please enter a valid email
-                                        address</div>
+                                        or phone number</div>
                                     @error('email')
                                         <div class="text-danger small">{{ $message }}</div>
                                     @enderror
@@ -141,6 +141,9 @@
                                 <div class="step-label">Complete</div>
                             </div>
                         </div>
+
+                        {{-- Link to the phone based signup flow --}}
+                        <p class="text-center small mb-3">Prefer SMS? <a href="{{ route('phone.register') }}">Sign up with your phone number</a></p>
 
                         <form id="registerForm" method="POST" action="{{ route('register') }}">
                             @csrf
