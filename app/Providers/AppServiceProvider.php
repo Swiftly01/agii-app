@@ -2,8 +2,12 @@
 
 namespace App\Providers;
 
+use App\Contracts\SmsGateway;
 use App\Models\Product;
 use App\Observers\ProductObserver;
+use App\Services\Analytics\AdminAnalyticsService;
+use App\Services\Analytics\Metrics;
+use App\Services\Sms\SmsManager;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Event;
@@ -16,7 +20,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // Controllers and channels depend on the contract, the manager picks the configured provider
+        $this->app->singleton(SmsGateway::class, fn ($app) => new SmsManager($app));
+
+        $this->registerAnalytics();
     }
 
     /**
@@ -28,48 +35,21 @@ class AppServiceProvider extends ServiceProvider
 
         Product::observe(ProductObserver::class);
 
-        $this->registerApprovalListeners();
-        $this->registerNotificationListeners();
+        Event::subscribe(\App\Listeners\AnalyticsEventSubscriber::class);
     }
 
-    /**
-     * Vendor/product approval side-effects (notifications, etc.) are wired
-     * as events rather than inline in the services/controllers, so new
-     * side-effects (e.g. Slack alerts, analytics) can be added later by
-     * registering another listener here — nothing else has to change.
-     */
-    protected function registerApprovalListeners(): void
+    // Listeners in app/Listeners are auto-discovered from their typed handle() method, so they must not be registered again here
+    // Register a new MetricGroup class here and it appears in the admin report
+    protected function registerAnalytics(): void
     {
-        Event::listen(
-            \App\Events\VendorApproved::class,
-            \App\Listeners\SendVendorApprovalNotification::class,
-        );
+        $this->app->tag([
+            Metrics\UserMetrics::class,
+            Metrics\LoginMetrics::class,
+            Metrics\ProductMetrics::class,
+            Metrics\EngagementMetrics::class,
+            Metrics\TrendMetrics::class,
+        ], 'analytics.metrics');
 
-        Event::listen(
-            \App\Events\VendorRejected::class,
-            \App\Listeners\SendVendorRejectionNotification::class,
-        );
-
-        Event::listen(
-            \App\Events\ProductApproved::class,
-            \App\Listeners\SendProductApprovalNotification::class,
-        );
-
-        Event::listen(
-            \App\Events\ProductRejected::class,
-            \App\Listeners\SendProductRejectionNotification::class,
-        );
-    }
-
-    /**
-     * Buyer-facing notifications. New notification triggers go here: map a
-     * domain event to a listener that sends an AppNotification subclass.
-     */
-    protected function registerNotificationListeners(): void
-    {
-        Event::listen(
-            \App\Events\ProductPublished::class,
-            \App\Listeners\NotifyBuyersOfNewProduct::class,
-        );
+        $this->app->when(AdminAnalyticsService::class)->needs('$groups')->giveTagged('analytics.metrics');
     }
 }

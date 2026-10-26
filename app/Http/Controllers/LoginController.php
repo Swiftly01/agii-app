@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Services\DashboardRedirector;
+use App\Support\PhoneNumber;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -31,14 +32,11 @@ class LoginController extends Controller
         // dd($request->all());
 
         $request->validate([
-            'email' => 'required|email',
+            'email' => 'required|string',
             'password' => 'required|string',
         ]);
 
-        $credentials = [
-            'email' => $request->email,
-            'password' => $request->password,
-        ];
+        $credentials = $this->credentialsFor(trim($request->email), $request->password);
 
         if (Auth::attempt($credentials, $request->filled('remember'))) {
             $request->session()->regenerate();
@@ -86,6 +84,18 @@ class LoginController extends Controller
         throw ValidationException::withMessages([
             'email' => [trans('auth.failed')],
         ]);
+    }
+
+    // The email field accepts either an email address or a phone number
+    private function credentialsFor(string $identifier, string $password): array
+    {
+        if (filter_var($identifier, FILTER_VALIDATE_EMAIL)) {
+            return ['email' => $identifier, 'password' => $password];
+        }
+
+        $phone = PhoneNumber::normalize($identifier, config('phone_verification.default_country_code'));
+
+        return ['phone' => $phone ?? $identifier, 'password' => $password];
     }
 
     /**
