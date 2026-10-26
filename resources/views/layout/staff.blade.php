@@ -1,30 +1,34 @@
 {{-- resources/views/layouts/staff.blade.php --}}
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-      @include('layout.components.analytics')
+    @include('layout.components.analytics')
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    
+
     <title>@yield('title', config('app.name', 'Staff Portal'))</title>
-    
+
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Custom CSS -->
     <link href="{{ asset('css/staff.css') }}" rel="stylesheet">
-    
+
     @stack('styles')
 
     <!-- Responsive sidebar (off-canvas below 992px) -->
     <style>
-        .sidebar-backdrop { display: none; }
+        .sidebar-backdrop {
+            display: none;
+        }
 
         /* Sidebar is an off-canvas drawer at every screen size: closed on load, opened with the menu button */
         @media all {
+
             /* Sidebar hidden off-canvas by default; `.active` = open on small screens */
             #sidebar.sidebar {
                 position: fixed !important;
@@ -42,6 +46,7 @@
                 -webkit-overflow-scrolling: touch;
                 box-shadow: none;
             }
+
             #sidebar.sidebar.active {
                 transform: translateX(0) !important;
                 box-shadow: 0 0 25px rgba(0, 0, 0, .35);
@@ -65,17 +70,31 @@
                 transition: opacity .3s ease, visibility .3s ease;
                 z-index: 1040;
             }
-            .sidebar-backdrop.show { opacity: 1; visibility: visible; }
 
-            body.sidebar-open { overflow: hidden; }
+            .sidebar-backdrop.show {
+                opacity: 1;
+                visibility: visible;
+            }
+
+            body.sidebar-open {
+                overflow: hidden;
+            }
         }
 
         @media (max-width: 575.98px) {
-            #content .main-content > .container-fluid { padding-left: .75rem; padding-right: .75rem; }
-            #content .footer .text-end { text-align: left !important; margin-top: .5rem; }
+            #content .main-content>.container-fluid {
+                padding-left: .75rem;
+                padding-right: .75rem;
+            }
+
+            #content .footer .text-end {
+                text-align: left !important;
+                margin-top: .5rem;
+            }
         }
     </style>
 </head>
+
 <body class="bg-light">
     <!-- Wrapper -->
     <div class="wrapper">
@@ -87,8 +106,9 @@
             <div class="sidebar-header">
                 <div class="sidebar-brand">
                     <div class="logo">
-                        @if(file_exists(public_path('/images/Agiilogo2.png')))
-                            <img src="{{ asset('https://agii.ng/images/Agiilogo2.png') }}" alt="Company Logo" class="img-fluid" width='300'>
+                        @if (file_exists(public_path('/images/Agiilogo2.png')))
+                            <img src="{{ asset('https://agii.ng/images/Agiilogo2.png') }}" alt="Company Logo"
+                                class="img-fluid" width='300'>
                         @else
                             <i class="fas fa-building"></i>
                         @endif
@@ -99,13 +119,13 @@
                     <i class="fas fa-bars"></i>
                 </button>
             </div>
-            
+
             <!-- Staff Profile Card -->
             <div class="staff-profile-card">
                 <div class="text-center mb-3">
-                    @if(Auth::user()->staffProfile && Auth::user()->staffProfile->passport_photo)
-                        <img src="{{ Storage::url(Auth::user()->staffProfile->passport_photo) }}" 
-                             alt="Profile" class="rounded-circle profile-img">
+                    @if (Auth::user()->staffProfile && Auth::user()->staffProfile->passport_photo)
+                        <img src="{{ Storage::url(Auth::user()->staffProfile->passport_photo) }}" alt="Profile"
+                            class="rounded-circle profile-img">
                     @else
                         <div class="rounded-circle profile-placeholder">
                             <i class="fas fa-user"></i>
@@ -122,7 +142,7 @@
                     </span>
                 </div>
             </div>
-            
+
             <!-- Sidebar Menu -->
             <ul class="list-unstyled components">
                 <li class="{{ request()->routeIs('staff.dashboard') ? 'active' : '' }}">
@@ -131,7 +151,7 @@
                         <span>Dashboard</span>
                     </a>
                 </li>
-                
+
                 <!-- Profile Section -->
                 <li class="{{ request()->routeIs('staff.profile.*') ? 'active' : '' }}">
                     <a href="#profileSubmenu" data-bs-toggle="collapse" aria-expanded="false" class="dropdown-toggle">
@@ -139,11 +159,11 @@
                         <span>My Profile</span>
                     </a>
                     <ul class="collapse list-unstyled" id="profileSubmenu">
-                       {{-- <li>
+                        {{-- <li>
                             <a href="{{ route('profile.edit') }}">
                                 <i class="fas fa-eye"></i> View Profile
                             </a>
-                        </li>--}}
+                        </li> --}}
                         <li>
                             <a href="{{ route('profile.edit') }}">
                                 <i class="fas fa-edit"></i> Edit Profile
@@ -156,7 +176,7 @@
                         </li>
                     </ul>
                 </li>
-                  <!-- Documents Section -->
+                <!-- Documents Section -->
                 <li class="{{ request()->routeIs('staff.documents.*') ? 'active' : '' }}">
                     <a href="#documentsSubmenu" data-bs-toggle="collapse" aria-expanded="false" class="dropdown-toggle">
                         <i class="fas fa-file-alt"></i>
@@ -184,44 +204,47 @@
                             </a>
                         </li>
                         <li>
-                                <a class="nav-link" href="{{ route('staff.hr-queries.index') }}">
-                                    <i class="bi bi-inbox"></i> My Queries
-                                </a>
+                            <a class="nav-link" href="{{ route('staff.hr-queries.index') }}">
+                                <i class="bi bi-inbox"></i> My Queries
+                            </a>
                         </li>
                         <!--<li>-->
                         <!--    <a href="{{ route('staff.documents.contracts') }}">-->
                         <!--        <i class="fas fa-file-contract"></i> Contracts-->
                         <!--    </a>-->
                         <!--</li>-->
-                        
-                        
+
+
                     </ul>
                 </li>
-                
-                
+
+
                 <li class="{{ request()->routeIs('staff.payroll.*') ? 'active' : '' }}">
-                    <a href="#documentsSubmenuing" data-bs-toggle="collapse" aria-expanded="false" class="dropdown-toggle">
+                    <a href="#documentsSubmenuing" data-bs-toggle="collapse" aria-expanded="false"
+                        class="dropdown-toggle">
                         <i class="fas fa-store"></i>
                         <span>Marketing</span>
                     </a>
                     <ul class="collapse list-unstyled" id="documentsSubmenuing">
                         <li>
                             <a href="{{ url('https://agii.ng/marketer/dashboard') }}">
-                                <i class="fas fa-upload"></i> Marketing Dashboard 
+                                <i class="fas fa-upload"></i> Marketing Dashboard
                             </a>
                         </li>
-                     
-                        
-                        
+
+
+
                     </ul>
                 </li>
-                
-                
-                
-                
+
+
+
+
                 <!-- Attendance & Leave Section -->
-                <li class="{{ request()->routeIs('staff.attendance.*') || request()->routeIs('staff.leave.*') ? 'active' : '' }}">
-                    <a href="#attendanceSubmenu" data-bs-toggle="collapse" aria-expanded="false" class="dropdown-toggle">
+                <li
+                    class="{{ request()->routeIs('staff.attendance.*') || request()->routeIs('staff.leave.*') ? 'active' : '' }}">
+                    <a href="#attendanceSubmenu" data-bs-toggle="collapse" aria-expanded="false"
+                        class="dropdown-toggle">
                         <i class="fas fa-calendar-alt"></i>
                         <span>Attendance</span>
                     </a>
@@ -236,10 +259,16 @@
                                 <i class="fas fa-history"></i> Attendance History
                             </a>
                         </li>
-                        
-                        
-                    </li>
-                      {{--  <li>
+
+
+                </li>
+                <li class="{{ request()->routeIs('staff.tasks.*') ? 'active' : '' }}">
+                    <a href="{{ route('staff.tasks.index') }}">
+                        <i class="fas fa-tasks"></i>
+                        <span>My Tasks</span>
+                    </a>
+                </li>
+                {{--  <li>
                             <a href="{{ route('staff.leave.dashboard') }}">
                                 <i class="fas fa-umbrella-beach"></i> Leave Dashboard
                             </a>
@@ -296,8 +325,9 @@
                 </li>
                 
                 --}}
-                
-              
+
+
+
                 {{--
                 <!-- Tasks & Performance -->
                 <li class="{{ request()->routeIs('staff.tasks.*') ? 'active' : '' }}">
@@ -426,24 +456,24 @@
             </ul>
             
             --}}
-            
-            <!-- Sidebar Footer -->
-            <div class="sidebar-footer">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div class="system-status">
-                        <i class="fas fa-circle text-success"></i>
-                        <small>System Online</small>
+
+                <!-- Sidebar Footer -->
+                <div class="sidebar-footer">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="system-status">
+                            <i class="fas fa-circle text-success"></i>
+                            <small>System Online</small>
+                        </div>
+                        <form action="{{ route('logout') }}" method="GET" class="d-inline">
+                            @csrf
+                            <button type="submit" class="btn btn-sm btn-outline-light">
+                                <i class="fas fa-sign-out-alt"></i>
+                            </button>
+                        </form>
                     </div>
-                    <form action="{{ route('logout') }}" method="GET" class="d-inline">
-                        @csrf
-                        <button type="submit" class="btn btn-sm btn-outline-light">
-                            <i class="fas fa-sign-out-alt"></i>
-                        </button>
-                    </form>
                 </div>
-            </div>
         </nav>
-        
+
         <!-- Main Content -->
         <div id="content" class="content">
             <!-- Top Navbar -->
@@ -454,7 +484,7 @@
                         <button type="button" id="sidebarToggle" class="btn btn-light me-3">
                             <i class="fas fa-bars"></i>
                         </button>
-                        
+
                         <!-- Breadcrumb -->
                         <nav aria-label="breadcrumb">
                             <ol class="breadcrumb mb-0">
@@ -474,7 +504,7 @@
                                 @php
                                     $notificationCount = Auth::user()->unreadNotifications()->count();
                                 @endphp
-                                @if($notificationCount > 0)
+                                @if ($notificationCount > 0)
                                     <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
                                         {{ $notificationCount }}
                                     </span>
@@ -482,8 +512,8 @@
                             </button>
                             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="notificationsDropdown">
                                 <li><h6 class="dropdown-header">Notifications</h6></li>
-                                @if($notificationCount > 0)
-                                    @foreach(Auth::user()->unreadNotifications()->take(5)->get() as $notification)
+                                @if ($notificationCount > 0)
+                                    @foreach (Auth::user()->unreadNotifications()->take(5)->get() as $notification)
                                         <li>
                                             <a class="dropdown-item" href="#">
                                                 <div class="d-flex">
@@ -515,7 +545,7 @@
                                 @php
                                     $messageCount = Auth::user()->unreadMessages()->count();
                                 @endphp
-                                @if($messageCount > 0)
+                                @if ($messageCount > 0)
                                     <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
                                         {{ $messageCount }}
                                     </span>
@@ -523,8 +553,8 @@
                             </button>
                             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="messagesDropdown">
                                 <li><h6 class="dropdown-header">Messages</h6></li>
-                                @if($messageCount > 0)
-                                    @foreach(Auth::user()->unreadMessages()->take(3)->get() as $message)
+                                @if ($messageCount > 0)
+                                    @foreach (Auth::user()->unreadMessages()->take(3)->get() as $message)
                                         <li>
                                             <a class="dropdown-item" href="#">
                                                 <div class="d-flex">
@@ -551,46 +581,50 @@
                         </div>
                         
                         --}}
-                        
-                        <!-- Quick Actions -->
-                        <div class="dropdown me-3">
-                            <button class="btn btn-light" type="button" id="quickActionsDropdown" 
-                                    data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="fas fa-bolt"></i> Quick Actions
-                            </button>
-                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="quickActionsDropdown">
-                                <li><a class="dropdown-item" href="{{ route('staff.attendance.dashboard') }}"><i class="fas fa-clock"></i> Clock In/Out</a></li>
-                                <li><a class="dropdown-item" href="{{ route('staff.leave.apply') }}"><i class="fas fa-file-medical"></i> Apply for Leave</a></li>
-                                <li><a class="dropdown-item" href="{{ route('staff.documents.upload') }}"><i class="fas fa-upload"></i> Upload Document</a></li>
-                             {{--   <li><a class="dropdown-item" href="{{ route('staff.tasks.dashboard') }}"><i class="fas fa-tasks"></i> View Tasks</a></li> 
+
+                    <!-- Quick Actions -->
+                    <div class="dropdown me-3">
+                        <button class="btn btn-light" type="button" id="quickActionsDropdown"
+                            data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-bolt"></i> Quick Actions
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="quickActionsDropdown">
+                            <li><a class="dropdown-item" href="{{ route('staff.attendance.dashboard') }}"><i
+                                        class="fas fa-clock"></i> Clock In/Out</a></li>
+                            <li><a class="dropdown-item" href="{{ route('staff.leave.apply') }}"><i
+                                        class="fas fa-file-medical"></i> Apply for Leave</a></li>
+                            <li><a class="dropdown-item" href="{{ route('staff.documents.upload') }}"><i
+                                        class="fas fa-upload"></i> Upload Document</a></li>
+                            {{--   <li><a class="dropdown-item" href="{{ route('staff.tasks.dashboard') }}"><i class="fas fa-tasks"></i> View Tasks</a></li> 
                                 <li><hr class="dropdown-divider"></li>
                                 <li><a class="dropdown-item" href="{{ route('staff.support.tickets') }}"><i class="fas fa-plus"></i> New Support Ticket</a></li> --}}
-                            </ul>
-                        </div>
-                        
-                        <!-- User Profile -->
-                        <div class="dropdown">
-                            <button class="btn btn-light d-flex align-items-center" type="button" id="userProfileDropdown" 
-                                    data-bs-toggle="dropdown" aria-expanded="false">
-                                @if(Auth::user()->staffProfile && Auth::user()->staffProfile->passport_photo)
-                                    <img src="{{ Storage::url(Auth::user()->staffProfile->passport_photo) }}" 
-                                         alt="Profile" class="rounded-circle me-2" style="width: 32px; height: 32px; object-fit: cover;">
-                                @else
-                                    <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-2" 
-                                         style="width: 32px; height: 32px;">
-                                        {{ substr(Auth::user()->first_name, 0, 1) }}
-                                    </div>
-                                @endif
-                                <span class="d-none d-md-inline">{{ Auth::user()->full_name }}</span>
-                                <i class="fas fa-chevron-down ms-2"></i>
-                            </button>
-                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userProfileDropdown">
-                                <li>
-                                    <a class="dropdown-item" href="{{ route('staff.profile.view') }}">
-                                        <i class="fas fa-user"></i> My Profile
-                                    </a>
-                                </li>
-                               {{-- <li>
+                        </ul>
+                    </div>
+
+                    <!-- User Profile -->
+                    <div class="dropdown">
+                        <button class="btn btn-light d-flex align-items-center" type="button"
+                            id="userProfileDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            @if (Auth::user()->staffProfile && Auth::user()->staffProfile->passport_photo)
+                                <img src="{{ Storage::url(Auth::user()->staffProfile->passport_photo) }}"
+                                    alt="Profile" class="rounded-circle me-2"
+                                    style="width: 32px; height: 32px; object-fit: cover;">
+                            @else
+                                <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-2"
+                                    style="width: 32px; height: 32px;">
+                                    {{ substr(Auth::user()->first_name, 0, 1) }}
+                                </div>
+                            @endif
+                            <span class="d-none d-md-inline">{{ Auth::user()->full_name }}</span>
+                            <i class="fas fa-chevron-down ms-2"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userProfileDropdown">
+                            <li>
+                                <a class="dropdown-item" href="{{ route('staff.profile.view') }}">
+                                    <i class="fas fa-user"></i> My Profile
+                                </a>
+                            </li>
+                            {{-- <li>
                                     <a class="dropdown-item" href="{{ route('staff.settings.account') }}">
                                         <i class="fas fa-cog"></i> Account Settings
                                     </a>
@@ -601,92 +635,98 @@
                                         <i class="fas fa-question-circle"></i> Help & Support
                                     </a>
                                 </li> --}}
-                                <li>
-                                    <a class="dropdown-item" href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
-                                        <i class="fas fa-sign-out-alt"></i> Logout
-                                    </a>
-                                </li>
-                            </ul>
-                        </div>
+                            <li>
+                                <a class="dropdown-item" href="#"
+                                    onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                                    <i class="fas fa-sign-out-alt"></i> Logout
+                                </a>
+                            </li>
+                        </ul>
                     </div>
                 </div>
-            </nav>
-            
-            <!-- Main Content Area -->
-            <main class="main-content">
-                <div class="container-fluid py-4">
-                    <!-- Flash Messages -->
-                    @if(session('success'))
-                        <div class="alert alert-success alert-dismissible fade show" role="alert">
-                            <i class="fas fa-check-circle"></i> {{ session('success') }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                        </div>
-                    @endif
-                    
-                    @if(session('error'))
-                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                            <i class="fas fa-exclamation-circle"></i> {{ session('error') }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                        </div>
-                    @endif
-                    
-                    @if(session('warning'))
-                        <div class="alert alert-warning alert-dismissible fade show" role="alert">
-                            <i class="fas fa-exclamation-triangle"></i> {{ session('warning') }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                        </div>
-                    @endif
-                    
-                    @if(session('info'))
-                        <div class="alert alert-info alert-dismissible fade show" role="alert">
-                            <i class="fas fa-info-circle"></i> {{ session('info') }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                        </div>
-                    @endif
-                    
-                    <!-- Page Content -->
-                    @yield('content')
-                </div>
-            </main>
-            
-            <!-- Footer -->
-            <footer class="footer bg-white border-top">
-                <div class="container-fluid py-3">
-                    <div class="row align-items-center">
-                        <div class="col-md-6">
-                            <small class="text-muted">
-                                © {{ date('Y') }} {{ config('app.name', 'Staff Portal') }}. All rights reserved.
-                            </small>
-                        </div>
-                        <div class="col-md-6 text-end">
-                            <small class="text-muted">
-                                <i class="fas fa-user-clock"></i> Last login: {{ Auth::user()->last_login_at ? Auth::user()->last_login_at->diffForHumans() : 'First time' }}
-                            </small>
-                            <span class="mx-2">•</span>
-                            <small class="text-muted">
-                                <i class="fas fa-shield-alt"></i> Secure Connection
-                            </small>
-                        </div>
-                    </div>
-                </div>
-            </footer>
         </div>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <div class="container-fluid py-4">
+                <!-- Flash Messages -->
+                @if (session('success'))
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        <i class="fas fa-check-circle"></i> {{ session('success') }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"
+                            aria-label="Close"></button>
+                    </div>
+                @endif
+
+                @if (session('error'))
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <i class="fas fa-exclamation-circle"></i> {{ session('error') }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"
+                            aria-label="Close"></button>
+                    </div>
+                @endif
+
+                @if (session('warning'))
+                    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                        <i class="fas fa-exclamation-triangle"></i> {{ session('warning') }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"
+                            aria-label="Close"></button>
+                    </div>
+                @endif
+
+                @if (session('info'))
+                    <div class="alert alert-info alert-dismissible fade show" role="alert">
+                        <i class="fas fa-info-circle"></i> {{ session('info') }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"
+                            aria-label="Close"></button>
+                    </div>
+                @endif
+
+                <!-- Page Content -->
+                @yield('content')
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer bg-white border-top">
+            <div class="container-fluid py-3">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <small class="text-muted">
+                            © {{ date('Y') }} {{ config('app.name', 'Staff Portal') }}. All rights reserved.
+                        </small>
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <small class="text-muted">
+                            <i class="fas fa-user-clock"></i> Last login:
+                            {{ Auth::user()->last_login_at ? Auth::user()->last_login_at->diffForHumans() : 'First time' }}
+                        </small>
+                        <span class="mx-2">•</span>
+                        <small class="text-muted">
+                            <i class="fas fa-shield-alt"></i> Secure Connection
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </footer>
     </div>
-    
+    </div>
+
     <!-- Hidden Logout Form -->
     <form id="logout-form" action="{{ route('logout') }}" method="GET" style="display: none;">
         @csrf
     </form>
-    
+
     <!-- Bootstrap 5 JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <!-- Custom JS -->
     <script src="{{ asset('js/staff.js') }}"></script>
-    
+
     @stack('scripts')
-    
+
     <script>
         // Sidebar toggle
         document.addEventListener('DOMContentLoaded', function() {
@@ -694,7 +734,7 @@
             const content = document.getElementById('content');
             const sidebarToggle = document.getElementById('sidebarToggle');
             const sidebarCollapse = document.getElementById('sidebarCollapse');
-            
+
             const backdrop = document.getElementById('sidebarBackdrop');
             const MOBILE_MAX = 991.98;
             const isMobile = () => true; // drawer behaviour at all sizes
@@ -724,7 +764,8 @@
 
             // Close with Escape on mobile
             document.addEventListener('keydown', function(e) {
-                if (e.key === 'Escape' && isMobile() && sidebar.classList.contains('active')) closeSidebar();
+                if (e.key === 'Escape' && isMobile() && sidebar.classList.contains('active'))
+            closeSidebar();
             });
 
             // Close sidebar on mobile after tapping a real link
@@ -756,13 +797,13 @@
                     });
                 }
             }
-            
+
             // Initial check
             handleResize();
-            
+
             // Check on resize
             window.addEventListener('resize', handleResize);
-            
+
             // Mark notification as read when clicked
             document.querySelectorAll('.dropdown-item[href^="#"]').forEach(item => {
                 item.addEventListener('click', function(e) {
@@ -772,7 +813,7 @@
                     }
                 });
             });
-            
+
             // Set active state for current page
             const currentPath = window.location.pathname;
             document.querySelectorAll('.components a').forEach(link => {
@@ -788,4 +829,5 @@
         });
     </script>
 </body>
+
 </html>

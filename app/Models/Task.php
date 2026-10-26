@@ -40,6 +40,7 @@ class Task extends Model
      */
     protected $casts = [
         'deadline' => 'datetime',
+        'completed_at' => 'datetime',
         'progress' => 'integer',
         'target_leads' => 'integer',        // Add this
         'target_conversion' => 'float',      // Add this

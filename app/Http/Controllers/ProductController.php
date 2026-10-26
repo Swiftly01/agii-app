@@ -3,7 +3,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\AnalyticsEventType;
 use App\Models\Product;
+use App\Services\Analytics\AnalyticsRecorder;
 use App\Models\Category;
 use App\Models\Location;
 use App\Models\Store;
@@ -656,7 +658,7 @@ public function homeByCategory(Request $request, $category = null)
 
 
    
-        public function trackView(Request $request)
+        public function trackView(Request $request, AnalyticsRecorder $analytics)
         {
             $request->validate([
                 'product_id' => 'required|exists:products,id'
@@ -666,6 +668,8 @@ public function homeByCategory(Request $request, $category = null)
             
           
          $product->increment('views');
+
+            $analytics->record(AnalyticsEventType::ProductClick, $request->user(), $product);
             
             return response()->json([
                 'success' => true,

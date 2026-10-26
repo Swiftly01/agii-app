@@ -13,46 +13,54 @@
     <div class="sidebar-menu">
 
         @if (Auth::user()->user_type == 'marketer')
-        <a href="{{ route('marketer.dashboard') }}" class="menu-item">
-            <i class="fas fa-home menu-icon"></i>
-            <span class="menu-text">Dashboard</span>
-        </a>
+            <a href="{{ route('marketer.dashboard') }}" class="menu-item">
+                <i class="fas fa-home menu-icon"></i>
+                <span class="menu-text">Dashboard</span>
+            </a>
 
-        <a href="{{ route('marketer.vendors.index') }}" class="menu-item ">
-            <i class="fas fa-users menu-icon"></i>
-            <span class="menu-text">All Vendors</span>
-            <span class="menu-badge">{{ $stats['total_vendors'] ?? session('total_vendors') }}</span>
-        </a>
+            <a href="{{ route('marketer.vendors.index') }}" class="menu-item ">
+                <i class="fas fa-users menu-icon"></i>
+                <span class="menu-text">All Vendors</span>
+                <span class="menu-badge">{{ $stats['total_vendors'] ?? session('total_vendors') }}</span>
+            </a>
 
-        <a href="{{ url('chat') }}" class="menu-item">
-            <i class="fas fa-box menu-icon"></i>
-            <span class="menu-text">Chat</span>
-        </a>
+            <a href="{{ url('chat') }}" class="menu-item">
+                <i class="fas fa-box menu-icon"></i>
+                <span class="menu-text">Chat</span>
+            </a>
 
 
 
-        <a href="{{ route('marketer.tasks.index') }}" class="menu-item ">
-            <i class="fas fa-users menu-icon"></i>
-            <span class="menu-text">Task</span>
-            <span class="menu-badge">{{ $stats['total_vendors'] ?? session('total_vendors') }}</span>
-        </a>
-
+            {{-- <a href="{{ route('marketer.tasks.index') }}" class="menu-item ">
+                <i class="fas fa-users menu-icon"></i>
+                <span class="menu-text">Task</span>
+                <span class="menu-badge">{{ $stats['total_vendors'] ?? session('total_vendors') }}</span>
+            </a> --}}
+            <a href="{{ route('staff.tasks.index') }}"
+                class="menu-item {{ request()->routeIs('staff.tasks.*') ? 'active' : '' }}">
+                <i class="fas fa-clipboard-list menu-icon"></i>
+                <span class="menu-text">My Tasks</span>
+            </a>
         @else
-        <a href="{{ route('admin.dashboard') }}" class="menu-item">
-            <i class="fas fa-home menu-icon"></i>
-            <span class="menu-text">Dashboard</span>
-        </a>
+            <a href="{{ route('admin.dashboard') }}" class="menu-item">
+                <i class="fas fa-home menu-icon"></i>
+                <span class="menu-text">Dashboard</span>
+            </a>
+            <a href="{{ route('admin.analytics') }}" class="menu-item">
+                <i class="fas fa-chart-line menu-icon"></i>
+                <span class="menu-text">Analytics</span>
+            </a>
 
-        <a href="{{ route('admin.vendors.index') }}" class="menu-item">
-            <i class="fas fa-home menu-icon"></i>
-            <span class="menu-text">Vendor</span>
-        </a>
+            <a href="{{ route('admin.vendors.index') }}" class="menu-item">
+                <i class="fas fa-home menu-icon"></i>
+                <span class="menu-text">Vendor</span>
+            </a>
 
-        <a href="{{ route('admin.employment.index') }}" class="menu-item">
-            <i class="fas fa-user menu-icon"></i>
-            <span class="menu-text">HR</span>
-        </a>
-        {{--
+            <a href="{{ route('admin.employment.index') }}" class="menu-item">
+                <i class="fas fa-user menu-icon"></i>
+                <span class="menu-text">HR</span>
+            </a>
+            {{--
         <a href="{{ url('https://agii.ng/public/admin/offer-letters') }}" class="menu-item">
             <i class="fas fa-user menu-icon"></i>
             <span class="menu-text">Offer Letter</span>
@@ -67,48 +75,46 @@
 
 
 
-        <a href="{{ route('admin.customers.index') }}" class="menu-item">
-            <i class="fas fa-box menu-icon"></i>
-            <span class="menu-text">Customer</span>
-        </a>
+            <a href="{{ route('admin.customers.index') }}" class="menu-item">
+                <i class="fas fa-box menu-icon"></i>
+                <span class="menu-text">Customer</span>
+            </a>
 
-        <a href="{{ route('admin.users.create') }}" class="menu-item">
-            <i class="fas fa-box menu-icon"></i>
-            <span class="menu-text">Add User</span>
-        </a>
+            <a href="{{ route('admin.users.create') }}" class="menu-item">
+                <i class="fas fa-box menu-icon"></i>
+                <span class="menu-text">Add User</span>
+            </a>
 
-        <a href="{{ route('admin.users.index') }}" class="menu-item">
-            <i class="fas fa-box menu-icon"></i>
-            <span class="menu-text">Assign Role </span>
-        </a>
+            <a href="{{ route('admin.users.index') }}" class="menu-item">
+                <i class="fas fa-box menu-icon"></i>
+                <span class="menu-text">Assign Role </span>
+            </a>
 
-        <a href="{{ route('admin.products.pendinglist') }}" class="menu-item">
-            <i class="fas fa-box menu-icon"></i>
-            <span class="menu-text">Pending Advert</span>
-        </a>
+            <a href="{{ route('admin.products.pendinglist') }}" class="menu-item">
+                <i class="fas fa-box menu-icon"></i>
+                <span class="menu-text">Pending Advert</span>
+            </a>
 
-        <a href="{{ route('admin.products.index') }}" class="menu-item">
-            <i class="fas fa-box menu-icon"></i>
-            <span class="menu-text">All Advert</span>
-        </a>
+            <a href="{{ route('admin.products.index') }}" class="menu-item">
+                <i class="fas fa-box menu-icon"></i>
+                <span class="menu-text">All Advert</span>
+            </a>
 
-        <a href="{{ route('admin.categories.index') }}" class="menu-item">
-            <i class="fas fa-sitemap menu-icon"></i>
-            <span class="menu-text">Categories</span>
-        </a>
-
-
-        <a href="{{ route('admin.tasks.index') }}" class="menu-item">
-            <i class="fas fa-box menu-icon"></i>
-            <span class="menu-text">Tasks</span>
-        </a>
-
-        <a href="{{ url('chat') }}" class="menu-item">
-            <i class="fas fa-box menu-icon"></i>
-            <span class="menu-text">Chat</span>
-        </a>
+            <a href="{{ route('admin.categories.index') }}" class="menu-item">
+                <i class="fas fa-sitemap menu-icon"></i>
+                <span class="menu-text">Categories</span>
+            </a>
 
 
+            <a href="{{ route('admin.tasks.index') }}" class="menu-item">
+                <i class="fas fa-box menu-icon"></i>
+                <span class="menu-text">Tasks</span>
+            </a>
+
+            <a href="{{ url('chat') }}" class="menu-item">
+                <i class="fas fa-box menu-icon"></i>
+                <span class="menu-text">Chat</span>
+            </a>
         @endif
 
 

@@ -2,13 +2,13 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use NotificationChannels\WebPush\HasPushSubscriptions;
 
-class User extends Authenticatable
+class User extends Authenticatable implements MustVerifyEmail
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable, HasPushSubscriptions;
@@ -94,6 +94,12 @@ class User extends Authenticatable
     public function hasPassword(): bool
     {
         return ! is_null($this->password);
+    }
+
+    // Phone-only accounts have no email to verify, so the 'verified' middleware must not lock them out
+    public function hasVerifiedEmail(): bool
+    {
+        return is_null($this->email) || ! is_null($this->email_verified_at);
     }
 
     public function hasVerifiedPhone(): bool

@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\User;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 final class ReferralCodeGenerator
@@ -14,6 +15,8 @@ final class ReferralCodeGenerator
         do {
             $code = $prefix.random_int(1000, 9999);
         } while (User::where('referral_code', $code)->exists());
+
+        Log::info($code);
 
         return $code;
     }

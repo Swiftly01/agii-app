@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\AdminAnalyticsController;
 use App\Http\Controllers\AdminCategoryController;
 use App\Http\Controllers\AdminVendorController;
 use App\Http\Controllers\AdminCustomerController;
@@ -12,6 +13,9 @@ use App\Http\Controllers\ProductController;
 Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     // Admin Dashboard
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('admin.dashboard');
+
+    // App Analytics
+    Route::get('/analytics', AdminAnalyticsController::class)->name('admin.analytics');
 
     // Vendors Management
     Route::get('/vendors', [AdminVendorController::class, 'index'])->name('admin.vendors.index');
