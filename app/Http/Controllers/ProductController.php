@@ -21,137 +21,259 @@ class ProductController extends Controller
 {
 
 
-public function index(Request $request, $category = null)
-{
-    // Shared categories for navigation
-    $categories = Category::all();
-    
-    // Check if this is a Hotel category
-    $isHotelCategory = false;
-    $hotelOwners = collect();
-    
-    // Initialize featuredServices with empty collection as default
-    $featuredServices = collect();
-    
-    if ($category) {
-        $catModel = Category::where('slug', $category)->first();
-        if ($catModel && strtolower($catModel->name) === 'hotel') {
-            $isHotelCategory = true;
-            
-            // Get all hotel products grouped by user
-            $hotelProducts = Product::with(['user', 'category'])
-                ->where('status', 'active')
-                ->where('category_id', $catModel->id)
-                ->orderBy('user_id')
-                ->get();
-            
-            // Group products by user
-            $hotelOwners = $hotelProducts->groupBy('user_id')->map(function($products, $userId) {
-                $user = $products->first()->user;
-                return [
-                    'user' => $user,
-                    'hotels' => $products,
-                    'total_hotels' => $products->count(),
-                    'user_rating' => $user->rating ?? 0,
-                    'user_location' => $user->location ?? 'N/A'
-                ];
-            })->values();
-        }
-    }
-    
+    public function index(Request $request, $category = null)
+    {
+        // Shared categories for navigation
+        $categories = Category::all();
 
-    // -----------------------------------------
-    // SERVICES PAGE
-    // -----------------------------------------
-    if (request()->is('services*')) {
-        $serviceCategories = Category::where('type', 'service')->get();
+        // Check if this is a Hotel category
+        $isHotelCategory = false;
+        $hotelOwners = collect();
 
-        $servicesQuery = Product::with(['user', 'category'])
-            ->where('status', 'active')
-            ->whereHas('category', fn($q) => $q->where('type', 'service'));
+        // Initialize featuredServices with empty collection as default
+        $featuredServices = collect();
 
-        // Filter by category
         if ($category) {
-            $catModel = Category::where('slug', $category)
-                ->where('type', 'service')
-                ->first();
+            $catModel = Category::where('slug', $category)->first();
+            if ($catModel && strtolower($catModel->name) === 'hotel') {
+                $isHotelCategory = true;
 
+                // Get all hotel products grouped by user
+                $hotelProducts = Product::with(['user', 'category'])
+                    ->where('status', 'active')
+                    ->where('category_id', $catModel->id)
+                    ->orderBy('user_id')
+                    ->get();
+
+                // Group products by user
+                $hotelOwners = $hotelProducts->groupBy('user_id')->map(function ($products, $userId) {
+                    $user = $products->first()->user;
+                    return [
+                        'user' => $user,
+                        'hotels' => $products,
+                        'total_hotels' => $products->count(),
+                        'user_rating' => $user->rating ?? 0,
+                        'user_location' => $user->location ?? 'N/A'
+                    ];
+                })->values();
+            }
+        }
+
+
+        // -----------------------------------------
+        // SERVICES PAGE
+        // -----------------------------------------
+        if (request()->is('services*')) {
+            $serviceCategories = Category::where('type', 'service')->get();
+
+            $servicesQuery = Product::with(['user', 'category'])
+                ->where('status', 'active')
+                ->whereHas('category', fn($q) => $q->where('type', 'service'));
+
+            // Filter by category
+            if ($category) {
+                $catModel = Category::where('slug', $category)
+                    ->where('type', 'service')
+                    ->first();
+
+                if ($catModel) {
+                    $servicesQuery->where('category_id', $catModel->id);
+                }
+            }
+
+            // 🔹 PRICE FILTER
+            if ($request->filled('min_price') && is_numeric($request->min_price)) {
+                $servicesQuery->where('price', '>=', (float) $request->min_price);
+            }
+
+            if ($request->filled('max_price') && is_numeric($request->max_price)) {
+                $servicesQuery->where('price', '<=', (float) $request->max_price);
+            }
+
+            // 🔹 CONDITION FILTER (for services)
+            if ($request->filled('condition') && $request->condition !== '') {
+                $servicesQuery->where('condition', $request->condition);
+            }
+
+            // 🔹 LOCATION FILTER - For services
+            if ($request->filled('location') && $request->location !== '') {
+                $location = $request->location;
+
+                if ($location === 'Online') {
+                    // Search for online/remote services
+                    $servicesQuery->where(function ($q) {
+                        $q->where('location', 'LIKE', '%online%')
+                            ->orWhere('location', 'LIKE', '%remote%')
+                            ->orWhere('location', 'LIKE', '%virtual%');
+                    });
+                } else {
+                    // Check if it's a state
+                    $isState = \App\Models\Location::where('state', $location)->exists();
+
+                    if ($isState) {
+                        // It's a state - get all LGAs in this state
+                        $lgas = \App\Models\Location::where('state', $location)
+                            ->pluck('lga')
+                            ->unique()
+                            ->toArray();
+
+                        if (!empty($lgas)) {
+                            $servicesQuery->where(function ($q) use ($lgas) {
+                                foreach ($lgas as $lga) {
+                                    $q->orWhere('location', 'LIKE', '%' . $lga . '%');
+                                }
+                            });
+                        }
+                    } else {
+                        // Assume it's an LGA or location name
+                        $servicesQuery->where(function ($q) use ($location) {
+                            $q->where('location', 'LIKE', '%' . $location . '%')
+                                ->orWhere('location', 'LIKE', '%' . $location . '%');
+                        });
+                    }
+                }
+            }
+
+            // 🔹 NEGOTIABLE FILTER
+            if ($request->has('negotiable') && $request->negotiable == '1') {
+                $servicesQuery->where('negotiable', true);
+            }
+
+            // 🔹 AVAILABLE NOW FILTER (for services)
+            if ($request->has('available') && $request->available == '1') {
+                // Assuming you have an 'available' or 'is_available' field
+                // Or you might want to filter by service provider availability
+                $servicesQuery->where('is_available', true); // Adjust based on your schema
+            }
+
+            // Search
+            if ($request->has('search')) {
+                $search = $request->search;
+                $servicesQuery->where(function ($q) use ($search) {
+                    $q->where('title', 'like', "%$search%")
+                        ->orWhere('description', 'like', "%$search%");
+                });
+            }
+
+            // 🔹 SORTING
+            $sort = $request->get('sort', 'latest');
+            switch ($sort) {
+                case 'price_low':
+                    $servicesQuery->orderBy('price', 'asc');
+                    break;
+                case 'price_high':
+                    $servicesQuery->orderBy('price', 'desc');
+                    break;
+                case 'rating':
+                    $servicesQuery->orderBy('rating', 'desc');
+                    break;
+                case 'featured':
+                    $servicesQuery->orderByRaw(
+                        'CASE WHEN boost_expires_at IS NOT NULL AND boost_expires_at > ? THEN 0 ELSE 1 END',
+                        [now()]
+                    )->orderBy('featured', 'desc')->latest();
+                    break;
+                case 'popular':
+                    $servicesQuery->orderBy('views', 'desc')->latest();
+                    break;
+                default:
+                    $servicesQuery->latest();
+                    break;
+            }
+
+            // Paginate services
+            $featuredServices = $servicesQuery->paginate(20)->withQueryString();
+
+            return view('services.index', compact(
+                'featuredServices',
+                'serviceCategories',
+                'categories',
+                'category'
+            ));
+        }
+
+
+        // -----------------------------------------
+        // PRODUCTS PAGE - With Hotel Special Case
+        // -----------------------------------------
+        $productsQuery = Product::with(['user', 'category'])
+            ->where('status', 'active');
+
+        // Filter
+        if ($category && !$isHotelCategory) { // Skip category filter for hotels since we handle it differently
+            $catModel = Category::where('slug', $category)->first();
             if ($catModel) {
-                $servicesQuery->where('category_id', $catModel->id);
+                $productsQuery->where('category_id', $catModel->id);
             }
         }
 
         // 🔹 PRICE FILTER
         if ($request->filled('min_price') && is_numeric($request->min_price)) {
-            $servicesQuery->where('price', '>=', (float) $request->min_price);
+            $productsQuery->where('price', '>=', (float) $request->min_price);
         }
-        
+
         if ($request->filled('max_price') && is_numeric($request->max_price)) {
-            $servicesQuery->where('price', '<=', (float) $request->max_price);
+            $productsQuery->where('price', '<=', (float) $request->max_price);
         }
 
-        // 🔹 CONDITION FILTER (for services)
-        if ($request->filled('condition') && $request->condition !== '') {
-            $servicesQuery->where('condition', $request->condition);
+        // 🔹 CONDITION FILTER - Handle both array and single value
+        if ($request->filled('condition')) {
+            $conditions = $request->condition;
+
+            // Handle both array and string inputs
+            if (!is_array($conditions)) {
+                $conditions = [$conditions];
+            }
+
+            // Remove empty values
+            $validConditions = array_filter($conditions, function ($value) {
+                return $value !== null && $value !== '' && $value !== 'null';
+            });
+
+            // Only apply filter if we have valid non-empty conditions
+            if (!empty($validConditions)) {
+                $productsQuery->whereIn('condition', $validConditions);
+            }
         }
 
-        // 🔹 LOCATION FILTER - For services
+        // 🔹 LOCATION FILTER - Match state to LGAs
         if ($request->filled('location') && $request->location !== '') {
             $location = $request->location;
-            
-            if ($location === 'Online') {
-                // Search for online/remote services
-                $servicesQuery->where(function($q) {
-                    $q->where('location', 'LIKE', '%online%')
-                      ->orWhere('location', 'LIKE', '%remote%')
-                      ->orWhere('location', 'LIKE', '%virtual%');
-                });
-            } else {
-                // Check if it's a state
-                $isState = \App\Models\Location::where('state', $location)->exists();
-                
-                if ($isState) {
-                    // It's a state - get all LGAs in this state
-                    $lgas = \App\Models\Location::where('state', $location)
-                        ->pluck('lga')
-                        ->unique()
-                        ->toArray();
-                    
-                    if (!empty($lgas)) {
-                        $servicesQuery->where(function($q) use ($lgas) {
-                            foreach ($lgas as $lga) {
-                                $q->orWhere('location', 'LIKE', '%' . $lga . '%');
-                            }
-                        });
-                    }
-                } else {
-                    // Assume it's an LGA or location name
-                    $servicesQuery->where(function($q) use ($location) {
-                        $q->where('location', 'LIKE', '%' . $location . '%')
-                          ->orWhere('location', 'LIKE', '%' . $location . '%');
+
+            // Check if it's a state (by checking if it exists in locations table as a state)
+            $isState = \App\Models\Location::where('state', $location)->exists();
+
+            if ($isState) {
+                // It's a state - get all LGAs in this state
+                $lgas = \App\Models\Location::where('state', $location)
+                    ->pluck('lga')
+                    ->unique()
+                    ->toArray();
+
+                if (!empty($lgas)) {
+                    $productsQuery->where(function ($q) use ($lgas) {
+                        foreach ($lgas as $lga) {
+                            $q->orWhere('location', 'LIKE', '%' . $lga . '%');
+                        }
                     });
                 }
+            } else {
+                // Assume it's an LGA or partial LGA name
+                $productsQuery->where('location', 'LIKE', '%' . $location . '%');
             }
         }
 
         // 🔹 NEGOTIABLE FILTER
         if ($request->has('negotiable') && $request->negotiable == '1') {
-            $servicesQuery->where('negotiable', true);
-        }
-
-        // 🔹 AVAILABLE NOW FILTER (for services)
-        if ($request->has('available') && $request->available == '1') {
-            // Assuming you have an 'available' or 'is_available' field
-            // Or you might want to filter by service provider availability
-            $servicesQuery->where('is_available', true); // Adjust based on your schema
+            $productsQuery->where('negotiable', true);
         }
 
         // Search
         if ($request->has('search')) {
             $search = $request->search;
-            $servicesQuery->where(function ($q) use ($search) {
+            $productsQuery->where(function ($q) use ($search) {
                 $q->where('title', 'like', "%$search%")
-                  ->orWhere('description', 'like', "%$search%");
+                    ->orWhere('description', 'like', "%$search%");
             });
         }
 
@@ -159,164 +281,280 @@ public function index(Request $request, $category = null)
         $sort = $request->get('sort', 'latest');
         switch ($sort) {
             case 'price_low':
-                $servicesQuery->orderBy('price', 'asc');
+                $productsQuery->orderBy('price', 'asc');
                 break;
             case 'price_high':
-                $servicesQuery->orderBy('price', 'desc');
+                $productsQuery->orderBy('price', 'desc');
                 break;
             case 'rating':
-                $servicesQuery->orderBy('rating', 'desc');
+                $productsQuery->orderBy('rating', 'desc');
                 break;
             case 'featured':
-                $servicesQuery->orderByRaw(
+                $productsQuery->orderByRaw(
                     'CASE WHEN boost_expires_at IS NOT NULL AND boost_expires_at > ? THEN 0 ELSE 1 END',
                     [now()]
-                )->orderBy('featured', 'desc')->latest();
-                break;
-            case 'popular':
-                $servicesQuery->orderBy('views', 'desc')->latest();
+                )->orderBy('featured', 'desc')->orderBy('created_at', 'desc');
                 break;
             default:
-                $servicesQuery->latest();
+                $productsQuery->latest();
                 break;
         }
 
-        // Paginate services
-        $featuredServices = $servicesQuery->paginate(20)->withQueryString();
+        // For hotel category, we won't use the normal products query
+        if ($isHotelCategory) {
+            $products = collect(); // Empty collection since we're showing grouped hotels
+        } else {
+            // Paginate products for non-hotel categories
+            $products = $productsQuery->paginate(20)->withQueryString();
+        }
 
-        return view('services.index', compact(
-            'featuredServices',
-            'serviceCategories',
+        // EXTRA DATA FOR HOME PAGE ONLY
+        if (request()->is('/')) {
+            $featuredStores = Store::with(['user', 'products'])
+                ->where('is_active', true)
+                ->whereHas('products')
+                ->inRandomOrder()
+                ->limit(10)
+                ->get();
+
+            $featuredProducts = Product::with(['user', 'category'])
+                ->where('status', 'active')
+                ->where(function ($q) {
+                    $q->where('featured', true)
+                        ->orWhere(function ($q2) {
+                            $q2->where('is_boost_carousel_pick', true)
+                                ->where('boost_expires_at', '>', now());
+                        });
+                })
+                ->orderBy('created_at', 'desc')
+                ->limit(12)
+                ->get();
+
+            // SERVICE data for homepage sections (NOT paginated)
+            $serviceCategories = Category::where('type', 'service')->get();
+
+            $featuredServices = Product::with(['user', 'category'])
+                ->where('status', 'active')
+                ->whereHas('category', fn($q) => $q->where('type', 'service'))
+                ->orderBy('created_at', 'desc')
+                ->limit(12)
+                ->get();
+
+            $featuredHotels = Product::where('category_id', 35)
+                ->take(10)
+                ->get();
+
+            // WELCOME PAGE RETURN
+            return view('welcome', compact(
+                'products',
+                'categories',
+                'category',
+                'featuredStores',
+                'featuredProducts',
+                'featuredServices',
+                'featuredHotels',
+                'serviceCategories',
+                'isHotelCategory',
+                'hotelOwners'
+            ));
+        }
+
+        // For products page with hotel category
+        if ($isHotelCategory) {
+            return view('products.hotels', compact(
+                'categories',
+                'category',
+                'hotelOwners',
+                'isHotelCategory',
+                'featuredServices' // Add this
+            ));
+        }
+
+        // Normal products view (for /products route)
+        // Get a default set of featured services for the products page
+        $featuredServices = Product::with(['user', 'category'])
+            ->where('status', 'active')
+            ->whereHas('category', fn($q) => $q->where('type', 'service'))
+            ->orderBy('created_at', 'desc')
+            ->limit(12)
+            ->get();
+
+        return view('products.index', compact(
+            'products',
             'categories',
-            'category'
+            'category',
+            'isHotelCategory',
+            'featuredServices' // Add this
         ));
     }
 
 
-    // -----------------------------------------
-    // PRODUCTS PAGE - With Hotel Special Case
-    // -----------------------------------------
-    $productsQuery = Product::with(['user', 'category'])
-        ->where('status', 'active');
 
-    // Filter
-    if ($category && !$isHotelCategory) { // Skip category filter for hotels since we handle it differently
-        $catModel = Category::where('slug', $category)->first();
-        if ($catModel) {
-            $productsQuery->where('category_id', $catModel->id);
+    public function userHotels(Request $request, $userId)
+    {
+        $user = User::findOrFail($userId);
+        $categories = Category::all();
+
+        // Find Hotel category
+        $hotelCategory = Category::where('name', 'LIKE', '%hotel%')
+            ->orWhere('name', 'LIKE', '%Hotel%')
+            ->first();
+
+        if (!$hotelCategory) {
+            abort(404, 'Hotel category not found');
         }
+
+        $hotels = Product::with(['user', 'category'])
+            ->where('status', 'active')
+            ->where('user_id', $userId)
+            ->where('category_id', $hotelCategory->id)
+            ->orderBy('created_at', 'desc')
+            ->paginate(12);
+
+        return view('products.user-hotels', compact('user', 'hotels', 'categories'));
     }
 
-    // 🔹 PRICE FILTER
-    if ($request->filled('min_price') && is_numeric($request->min_price)) {
-        $productsQuery->where('price', '>=', (float) $request->min_price);
-    }
-    
-    if ($request->filled('max_price') && is_numeric($request->max_price)) {
-        $productsQuery->where('price', '<=', (float) $request->max_price);
-    }
 
-    // 🔹 CONDITION FILTER - Handle both array and single value
-    if ($request->filled('condition')) {
-        $conditions = $request->condition;
-        
-        // Handle both array and string inputs
-        if (!is_array($conditions)) {
-            $conditions = [$conditions];
-        }
-        
-        // Remove empty values
-        $validConditions = array_filter($conditions, function($value) {
-            return $value !== null && $value !== '' && $value !== 'null';
-        });
-        
-        // Only apply filter if we have valid non-empty conditions
-        if (!empty($validConditions)) {
-            $productsQuery->whereIn('condition', $validConditions);
-        }
-    }
 
-    // 🔹 LOCATION FILTER - Match state to LGAs
-    if ($request->filled('location') && $request->location !== '') {
-        $location = $request->location;
-        
-        // Check if it's a state (by checking if it exists in locations table as a state)
-        $isState = \App\Models\Location::where('state', $location)->exists();
-        
-        if ($isState) {
-            // It's a state - get all LGAs in this state
-            $lgas = \App\Models\Location::where('state', $location)
-                ->pluck('lga')
-                ->unique()
-                ->toArray();
-            
-            if (!empty($lgas)) {
-                $productsQuery->where(function($q) use ($lgas) {
-                    foreach ($lgas as $lga) {
-                        $q->orWhere('location', 'LIKE', '%' . $lga . '%');
-                    }
-                });
+
+    public function homeByCategory(Request $request, $category = null)
+    {
+        // Shared categories for navigation
+        $categories = Category::all();
+
+        $isHotelCategory = false;
+        $hotelOwners = collect();
+
+        // -----------------------------------------
+        // CATEGORY CHECK (HOTEL SPECIAL CASE)
+        // -----------------------------------------
+        if ($category) {
+            $catModel = Category::where('slug', $category)->first();
+
+            if ($catModel && strtolower($catModel->name) === 'hotel') {
+                $isHotelCategory = true;
+
+                $hotelProducts = Product::with(['user', 'category'])
+                    ->where('status', 'active')
+                    ->where('category_id', $catModel->id)
+                    ->orderBy('user_id')
+                    ->get();
+
+                $hotelOwners = $hotelProducts
+                    ->groupBy('user_id')
+                    ->map(function ($products) {
+                        $user = $products->first()->user;
+
+                        return [
+                            'user' => $user,
+                            'hotels' => $products,
+                            'total_hotels' => $products->count(),
+                            'user_rating' => $user->rating ?? 0,
+                            'user_location' => $user->location ?? 'N/A',
+                        ];
+                    })
+                    ->values();
             }
-        } else {
-            // Assume it's an LGA or partial LGA name
-            $productsQuery->where('location', 'LIKE', '%' . $location . '%');
         }
-    }
 
-    // 🔹 NEGOTIABLE FILTER
-    if ($request->has('negotiable') && $request->negotiable == '1') {
-        $productsQuery->where('negotiable', true);
-    }
+        // -----------------------------------------
+        // PRODUCTS (CATEGORY FILTER + PAGINATION + FILTERS)
+        // -----------------------------------------
+        $products = collect(); // default
 
-    // Search
-    if ($request->has('search')) {
-        $search = $request->search;
-        $productsQuery->where(function ($q) use ($search) {
-            $q->where('title', 'like', "%$search%")
-              ->orWhere('description', 'like', "%$search%");
-        });
-    }
+        if (!$isHotelCategory) {
+            $productsQuery = Product::with(['user', 'category'])
+                ->where('status', 'active');
 
-    // 🔹 SORTING
-    $sort = $request->get('sort', 'latest');
-    switch ($sort) {
-        case 'price_low':
-            $productsQuery->orderBy('price', 'asc');
-            break;
-        case 'price_high':
-            $productsQuery->orderBy('price', 'desc');
-            break;
-        case 'rating':
-            $productsQuery->orderBy('rating', 'desc');
-            break;
-        case 'featured':
-            $productsQuery->orderByRaw(
-                'CASE WHEN boost_expires_at IS NOT NULL AND boost_expires_at > ? THEN 0 ELSE 1 END',
-                [now()]
-            )->orderBy('featured', 'desc')->orderBy('created_at', 'desc');
-            break;
-        default:
-            $productsQuery->latest();
-            break;
-    }
+            // Category filter
+            if ($category) {
+                $catModel = Category::where('slug', $category)->first();
+                if ($catModel) {
+                    $productsQuery->where('category_id', $catModel->id);
 
-    // For hotel category, we won't use the normal products query
-    if ($isHotelCategory) {
-        $products = collect(); // Empty collection since we're showing grouped hotels
-    } else {
-        // Paginate products for non-hotel categories
-        $products = $productsQuery->paginate(20)->withQueryString();
-    }
+                    // Debug: Log category info
+                    \Log::info("Filtering by category: {$catModel->name} (ID: {$catModel->id})");
+                }
+            }
 
-    // EXTRA DATA FOR HOME PAGE ONLY
-    if (request()->is('/')) {
+            // 🔹 PRICE FILTER
+            if ($request->filled('min_price') && is_numeric($request->min_price)) {
+                $minPrice = (float) $request->min_price;
+                $productsQuery->where('price', '>=', $minPrice);
+                \Log::info("Min price filter: ₦{$minPrice}");
+            }
+
+            if ($request->filled('max_price') && is_numeric($request->max_price)) {
+                $maxPrice = (float) $request->max_price;
+                $productsQuery->where('price', '<=', $maxPrice);
+                \Log::info("Max price filter: ₦{$maxPrice}");
+            }
+
+            // 🔹 CONDITION FILTER 
+
+            if ($request->filled('condition') && $request->condition !== '') {
+                $productsQuery->where('condition', $request->condition);
+            }
+
+            // 🔹 LOCATION FILTER
+            if ($request->filled('location') && $request->location !== '') {
+                $location = $request->location;
+                $productsQuery->where('location', 'LIKE', '%' . $location . '%');
+                \Log::info("Location filter: {$location}");
+            }
+
+            // 🔹 NEGOTIABLE FILTER
+            if ($request->has('negotiable') && $request->negotiable == '1') {
+                $productsQuery->where('negotiable', true);
+                \Log::info("Negotiable filter: true");
+            }
+
+            // 🔹 SORTING
+            $sort = $request->get('sort', 'latest');
+            \Log::info("Sort by: {$sort}");
+
+            switch ($sort) {
+                case 'price_low':
+                    $productsQuery->orderBy('price', 'asc');
+                    break;
+                case 'price_high':
+                    $productsQuery->orderBy('price', 'desc');
+                    break;
+                case 'rating':
+                    $productsQuery->orderBy('rating', 'desc');
+                    break;
+                case 'featured':
+                    $productsQuery->orderByRaw(
+                        'CASE WHEN boost_expires_at IS NOT NULL AND boost_expires_at > ? THEN 0 ELSE 1 END',
+                        [now()]
+                    )->orderBy('featured', 'desc')->orderBy('created_at', 'desc');
+                    break;
+                default:
+                    $productsQuery->latest();
+                    break;
+            }
+
+            // Debug: Get the SQL query before pagination
+            $sql = $productsQuery->toSql();
+            $bindings = $productsQuery->getBindings();
+            \Log::info("Final SQL Query:", ['sql' => $sql, 'bindings' => $bindings]);
+
+            // PAGINATION
+            $products = $productsQuery->paginate(12)->withQueryString();
+
+            \Log::info("Total products found: {$products->total()}");
+        }
+
+        // -----------------------------------------
+        // HOME PAGE EXTRAS (NOT PAGINATED)
+        // -----------------------------------------
         $featuredStores = Store::with(['user', 'products'])
             ->where('is_active', true)
             ->whereHas('products')
             ->inRandomOrder()
             ->limit(10)
             ->get();
-        
+
         $featuredProducts = Product::with(['user', 'category'])
             ->where('status', 'active')
             ->where(function ($q) {
@@ -326,25 +564,24 @@ public function index(Request $request, $category = null)
                             ->where('boost_expires_at', '>', now());
                     });
             })
-            ->orderBy('created_at', 'desc')
+            ->latest()
             ->limit(12)
             ->get();
-        
-        // SERVICE data for homepage sections (NOT paginated)
+
         $serviceCategories = Category::where('type', 'service')->get();
 
         $featuredServices = Product::with(['user', 'category'])
             ->where('status', 'active')
             ->whereHas('category', fn($q) => $q->where('type', 'service'))
-            ->orderBy('created_at', 'desc')
+            ->latest()
             ->limit(12)
             ->get();
-        
+
         $featuredHotels = Product::where('category_id', 35)
-            ->take(10)
+            ->latest()
+            ->limit(10)
             ->get();
 
-        // WELCOME PAGE RETURN
         return view('welcome', compact(
             'products',
             'categories',
@@ -358,251 +595,13 @@ public function index(Request $request, $category = null)
             'hotelOwners'
         ));
     }
-    
-    // For products page with hotel category
-    if ($isHotelCategory) {
-        return view('products.hotels', compact(
-            'categories',
-            'category',
-            'hotelOwners',
-            'isHotelCategory',
-            'featuredServices' // Add this
-        ));
-    }
-    
-    // Normal products view (for /products route)
-    // Get a default set of featured services for the products page
-    $featuredServices = Product::with(['user', 'category'])
-        ->where('status', 'active')
-        ->whereHas('category', fn($q) => $q->where('type', 'service'))
-        ->orderBy('created_at', 'desc')
-        ->limit(12)
-        ->get();
-    
-    return view('products.index', compact(
-        'products',
-        'categories',
-        'category',
-        'isHotelCategory',
-        'featuredServices' // Add this
-    ));
-}
-    
-    
-
-public function userHotels(Request $request, $userId)
-{
-    $user = User::findOrFail($userId);
-    $categories = Category::all();
-    
-    // Find Hotel category
-    $hotelCategory = Category::where('name', 'LIKE', '%hotel%')
-        ->orWhere('name', 'LIKE', '%Hotel%')
-        ->first();
-    
-    if (!$hotelCategory) {
-        abort(404, 'Hotel category not found');
-    }
-    
-    $hotels = Product::with(['user', 'category'])
-        ->where('status', 'active')
-        ->where('user_id', $userId)
-        ->where('category_id', $hotelCategory->id)
-        ->orderBy('created_at', 'desc')
-        ->paginate(12);
-    
-    return view('products.user-hotels', compact('user', 'hotels', 'categories'));
-}
-
-
-
-
-public function homeByCategory(Request $request, $category = null)
-{
-    // Shared categories for navigation
-    $categories = Category::all();
-
-    $isHotelCategory = false;
-    $hotelOwners = collect();
-
-    // -----------------------------------------
-    // CATEGORY CHECK (HOTEL SPECIAL CASE)
-    // -----------------------------------------
-    if ($category) {
-        $catModel = Category::where('slug', $category)->first();
-
-        if ($catModel && strtolower($catModel->name) === 'hotel') {
-            $isHotelCategory = true;
-
-            $hotelProducts = Product::with(['user', 'category'])
-                ->where('status', 'active')
-                ->where('category_id', $catModel->id)
-                ->orderBy('user_id')
-                ->get();
-
-            $hotelOwners = $hotelProducts
-                ->groupBy('user_id')
-                ->map(function ($products) {
-                    $user = $products->first()->user;
-
-                    return [
-                        'user' => $user,
-                        'hotels' => $products,
-                        'total_hotels' => $products->count(),
-                        'user_rating' => $user->rating ?? 0,
-                        'user_location' => $user->location ?? 'N/A',
-                    ];
-                })
-                ->values();
-        }
-    }
-
-    // -----------------------------------------
-    // PRODUCTS (CATEGORY FILTER + PAGINATION + FILTERS)
-    // -----------------------------------------
-    $products = collect(); // default
-
-      if (!$isHotelCategory) {
-        $productsQuery = Product::with(['user', 'category'])
-            ->where('status', 'active');
-
-        // Category filter
-        if ($category) {
-            $catModel = Category::where('slug', $category)->first();
-            if ($catModel) {
-                $productsQuery->where('category_id', $catModel->id);
-                
-                // Debug: Log category info
-                \Log::info("Filtering by category: {$catModel->name} (ID: {$catModel->id})");
-            }
-        }
-
-        // 🔹 PRICE FILTER
-        if ($request->filled('min_price') && is_numeric($request->min_price)) {
-            $minPrice = (float) $request->min_price;
-            $productsQuery->where('price', '>=', $minPrice);
-            \Log::info("Min price filter: ₦{$minPrice}");
-        }
-        
-        if ($request->filled('max_price') && is_numeric($request->max_price)) {
-            $maxPrice = (float) $request->max_price;
-            $productsQuery->where('price', '<=', $maxPrice);
-            \Log::info("Max price filter: ₦{$maxPrice}");
-        }
-
-        // 🔹 CONDITION FILTER 
-      
-            if ($request->filled('condition') && $request->condition !== '') {
-                $productsQuery->where('condition', $request->condition);
-               
-            }
-
-        // 🔹 LOCATION FILTER
-        if ($request->filled('location') && $request->location !== '') {
-            $location = $request->location;
-            $productsQuery->where('location', 'LIKE', '%' . $location . '%');
-            \Log::info("Location filter: {$location}");
-        }
-
-        // 🔹 NEGOTIABLE FILTER
-        if ($request->has('negotiable') && $request->negotiable == '1') {
-            $productsQuery->where('negotiable', true);
-            \Log::info("Negotiable filter: true");
-        }
-
-        // 🔹 SORTING
-        $sort = $request->get('sort', 'latest');
-        \Log::info("Sort by: {$sort}");
-        
-        switch ($sort) {
-            case 'price_low':
-                $productsQuery->orderBy('price', 'asc');
-                break;
-            case 'price_high':
-                $productsQuery->orderBy('price', 'desc');
-                break;
-            case 'rating':
-                $productsQuery->orderBy('rating', 'desc');
-                break;
-            case 'featured':
-                $productsQuery->orderByRaw(
-                'CASE WHEN boost_expires_at IS NOT NULL AND boost_expires_at > ? THEN 0 ELSE 1 END',
-                [now()]
-            )->orderBy('featured', 'desc')->orderBy('created_at', 'desc');
-                break;
-            default:
-                $productsQuery->latest();
-                break;
-        }
-
-        // Debug: Get the SQL query before pagination
-        $sql = $productsQuery->toSql();
-        $bindings = $productsQuery->getBindings();
-        \Log::info("Final SQL Query:", ['sql' => $sql, 'bindings' => $bindings]);
-
-        // PAGINATION
-        $products = $productsQuery->paginate(12)->withQueryString();
-        
-        \Log::info("Total products found: {$products->total()}");
-    }
-
-    // -----------------------------------------
-    // HOME PAGE EXTRAS (NOT PAGINATED)
-    // -----------------------------------------
-    $featuredStores = Store::with(['user', 'products'])
-        ->where('is_active', true)
-        ->whereHas('products')
-        ->inRandomOrder()
-        ->limit(10)
-        ->get();
-
-    $featuredProducts = Product::with(['user', 'category'])
-        ->where('status', 'active')
-        ->where(function ($q) {
-            $q->where('featured', true)
-                ->orWhere(function ($q2) {
-                    $q2->where('is_boost_carousel_pick', true)
-                        ->where('boost_expires_at', '>', now());
-                });
-        })
-        ->latest()
-        ->limit(12)
-        ->get();
-
-    $serviceCategories = Category::where('type', 'service')->get();
-
-    $featuredServices = Product::with(['user', 'category'])
-        ->where('status', 'active')
-        ->whereHas('category', fn ($q) => $q->where('type', 'service'))
-        ->latest()
-        ->limit(12)
-        ->get();
-
-    $featuredHotels = Product::where('category_id', 35)
-        ->latest()
-        ->limit(10)
-        ->get();
-
-    return view('welcome', compact(
-        'products',
-        'categories',
-        'category',
-        'featuredStores',
-        'featuredProducts',
-        'featuredServices',
-        'featuredHotels',
-        'serviceCategories',
-        'isHotelCategory',
-        'hotelOwners'
-    ));
-}
 
 
 
 
     public function show($slug)
     {
-        $product = Product::with(['user', 'category', 'reviews' => fn ($q) => $q->with('user')->latest()])
+        $product = Product::with(['user', 'category', 'reviews' => fn($q) => $q->with('user')->latest()])
             ->where('slug', $slug)
             ->where('status', 'active')
             ->firstOrFail();
@@ -657,25 +656,25 @@ public function homeByCategory(Request $request, $category = null)
     }
 
 
-   
-        public function trackView(Request $request, AnalyticsRecorder $analytics)
-        {
-            $request->validate([
-                'product_id' => 'required|exists:products,id'
-            ]);
-        
-            $product = Product::find($request->product_id);
-            
-          
-         $product->increment('views');
 
-            $analytics->record(AnalyticsEventType::ProductClick, $request->user(), $product);
-            
-            return response()->json([
-                'success' => true,
-                'views_count' =>  $product->views
-            ]);
-        }
+    public function trackView(Request $request, AnalyticsRecorder $analytics)
+    {
+        $request->validate([
+            'product_id' => 'required|exists:products,id'
+        ]);
+
+        $product = Product::find($request->product_id);
+
+
+        $product->increment('views');
+
+        $analytics->record(AnalyticsEventType::ProductClick, $request->user(), $product);
+
+        return response()->json([
+            'success' => true,
+            'views_count' =>  $product->views
+        ]);
+    }
 
 
 
@@ -830,23 +829,23 @@ public function homeByCategory(Request $request, $category = null)
         //     ->get();
 
 
-      
-            
+
+
         $featuredStores = Store::with(['user', 'products'])
             ->where('is_active', true)
             ->whereHas('products') // ensures store has products
             ->inRandomOrder()
             ->limit(10)
             ->get();
-        
-      
 
-            
+
+
+
         $featuredProducts = Product::where('status', 'active')
             ->where('featured', true)
             ->limit(8)
             ->get();
-            
+
 
 
         return view('store', compact(
@@ -1122,30 +1121,30 @@ public function homeByCategory(Request $request, $category = null)
         return $count ? "{$slug}-{$count}" : $slug;
     }
 
+    // Owners can manage their own products, admins can manage any
+    private function findManageable(string $slug): Product
+    {
+        return Product::where('slug', $slug)
+            ->when(! auth()->user()->isAdmin(), fn($query) => $query->where('user_id', Auth::id()))
+            ->firstOrFail();
+    }
 
-   public function edit($slug)
-{
-    $product = Product::where('slug', $slug)
-        ->when(!auth()->user()->isAdmin(), function($query) {
-            // Restrict to owner if not admin
-            $query->where('user_id', Auth::id());
-        })
-        ->firstOrFail();
+    public function edit($slug)
+    {
+        $product = $this->findManageable($slug);
 
-    $categories = Category::active()->mainCategories()->get();
+        $categories = Category::active()->mainCategories()->get();
 
-    return view('products.edit', compact('product', 'categories'));
-}
+        return view('products.edit', compact('product', 'categories'));
+    }
 
-    
-    
-    
+
+
+
 
     public function update(Request $request, $slug)
     {
-        $product = Product::where('slug', $slug)
-            ->where('user_id', Auth::id())
-            ->firstOrFail();
+        $product = $this->findManageable($slug);
 
         $validated = $request->validate([
             'title' => 'required|string|max:255',
@@ -1301,285 +1300,116 @@ public function homeByCategory(Request $request, $category = null)
     
     // app/Http/Controllers/ProductController.php
 
-/**
- * Display vendor advert reports with filters for active/inactive
- * 
- * 1. When they were registered
- * 2. Their advert durations
- * 3. Amount Paid by each of the active adverts
- * 4. Their active email address and contact number
- * 5. Expiration date of each of those adverts
- */
-public function vendorAdvertReport(Request $request)
-{
-    $statusFilter = $request->get('status', 'all'); // all, active, inactive
-    
-    // Base query for vendors
-    $vendorsQuery = User::where('user_type', 'vendor')
-        ->with([
-            'subscriptions' => function ($query) use ($statusFilter) {
-                $query->when($statusFilter === 'active', function ($q) {
-                    $q->where('status', 'active')
-                      ->where('expires_at', '>', now());
-                })
-                ->when($statusFilter === 'inactive', function ($q) {
-                    $q->where(function ($q) {
-                        $q->where('status', '!=', 'active')
-                          ->orWhere('expires_at', '<=', now());
-                    });
-                })
-                ->latest();
-            },
-            'products' => function ($query) use ($statusFilter) {
-                $query->with(['category'])
-                    ->when($statusFilter === 'active', function ($q) {
-                        $q->where('status', 'active');
+    /**
+     * Display vendor advert reports with filters for active/inactive
+     * 
+     * 1. When they were registered
+     * 2. Their advert durations
+     * 3. Amount Paid by each of the active adverts
+     * 4. Their active email address and contact number
+     * 5. Expiration date of each of those adverts
+     */
+    public function vendorAdvertReport(Request $request)
+    {
+        $statusFilter = $request->get('status', 'all'); // all, active, inactive
+
+        // Base query for vendors
+        $vendorsQuery = User::where('user_type', 'vendor')
+            ->with([
+                'subscriptions' => function ($query) use ($statusFilter) {
+                    $query->when($statusFilter === 'active', function ($q) {
+                        $q->where('status', 'active')
+                            ->where('expires_at', '>', now());
                     })
-                    ->when($statusFilter === 'inactive', function ($q) {
-                        $q->where('status', '!=', 'active');
-                    })
-                    ->latest();
-            }
-        ]);
+                        ->when($statusFilter === 'inactive', function ($q) {
+                            $q->where(function ($q) {
+                                $q->where('status', '!=', 'active')
+                                    ->orWhere('expires_at', '<=', now());
+                            });
+                        })
+                        ->latest();
+                },
+                'products' => function ($query) use ($statusFilter) {
+                    $query->with(['category'])
+                        ->when($statusFilter === 'active', function ($q) {
+                            $q->where('status', 'active');
+                        })
+                        ->when($statusFilter === 'inactive', function ($q) {
+                            $q->where('status', '!=', 'active');
+                        })
+                        ->latest();
+                }
+            ]);
 
-    // Apply product existence filter
-    if ($statusFilter !== 'all') {
-        $vendorsQuery->whereHas('products', function ($query) use ($statusFilter) {
-            if ($statusFilter === 'active') {
-                $query->where('status', 'active');
-            } elseif ($statusFilter === 'inactive') {
-                $query->where('status', '!=', 'active');
-            }
-        });
-    }
-
-    // Apply subscription existence filter
-    if ($statusFilter === 'active') {
-        $vendorsQuery->whereHas('subscriptions', function ($query) {
-            $query->where('status', 'active')
-                  ->where('expires_at', '>', now());
-        });
-    } elseif ($statusFilter === 'inactive') {
-        $vendorsQuery->where(function ($query) {
-            $query->doesntHave('subscriptions')
-                  ->orWhereHas('subscriptions', function ($q) {
-                      $q->where('status', '!=', 'active')
-                        ->orWhere('expires_at', '<=', now());
-                  });
-        });
-    }
-
-    // Apply search filter
-    if ($request->filled('search')) {
-        $search = $request->search;
-        $vendorsQuery->where(function ($query) use ($search) {
-            $query->where('business_name', 'like', "%$search%")
-                  ->orWhere('full_name', 'like', "%$search%")
-                  ->orWhere('email', 'like', "%$search%")
-                  ->orWhere('phone', 'like', "%$search%");
-        });
-    }
-
-    // Apply sorting
-    $sort = $request->get('sort', 'newest');
-    switch ($sort) {
-        case 'oldest':
-            $vendorsQuery->orderBy('created_at', 'asc');
-            break;
-        case 'most_ads':
-            $vendorsQuery->withCount(['products as active_products_count' => function ($query) {
-                $query->where('status', 'active');
-            }])->orderBy('active_products_count', 'desc');
-            break;
-        case 'highest_paid':
-            $vendorsQuery->withSum(['subscriptions as total_paid_sum' => function ($query) {
-                $query->where('status', 'active');
-            }], 'amount_paid')->orderBy('total_paid_sum', 'desc');
-            break;
-        default:
-            $vendorsQuery->orderBy('created_at', 'desc');
-            break;
-    }
-
-    $vendors = $vendorsQuery->paginate(50);
-
-    // Process vendor data for the view
-    $vendorReports = $vendors->map(function ($vendor) use ($statusFilter) {
-        // Get most recent subscription
-        $activeSubscription = $vendor->subscriptions->first();
-        $hasActiveSubscription = $activeSubscription && 
-                                $activeSubscription->status === 'active' && 
-                                $activeSubscription->expires_at > now();
-        
-        // Get products based on status filter
-        $products = $vendor->products;
-        if ($statusFilter === 'active') {
-            $products = $products->where('status', 'active');
-        } elseif ($statusFilter === 'inactive') {
-            $products = $products->where('status', '!=', 'active');
+        // Apply product existence filter
+        if ($statusFilter !== 'all') {
+            $vendorsQuery->whereHas('products', function ($query) use ($statusFilter) {
+                if ($statusFilter === 'active') {
+                    $query->where('status', 'active');
+                } elseif ($statusFilter === 'inactive') {
+                    $query->where('status', '!=', 'active');
+                }
+            });
         }
 
-        // Calculate advert durations for each product
-        $productsWithDuration = $products->map(function ($product) use ($activeSubscription, $hasActiveSubscription) {
-            // Calculate duration (in days) based on subscription or product creation
-            $durationDays = 0;
-            $expirationDate = null;
-            $amountPaid = 0;
-            $subscriptionStatus = 'none';
-            
-            if ($hasActiveSubscription) {
-                $subscriptionStatus = 'active';
-                $startDate = $activeSubscription->created_at;
-                $expirationDate = $activeSubscription->expires_at;
-                $durationDays = $startDate->diffInDays($expirationDate);
-                $amountPaid = $activeSubscription->amount_paid ?? $activeSubscription->price ?? 0;
-            } elseif ($activeSubscription) {
-                $subscriptionStatus = 'inactive';
-                $expirationDate = $activeSubscription->expires_at;
-                $durationDays = $activeSubscription->created_at->diffInDays($expirationDate);
-                $amountPaid = $activeSubscription->amount_paid ?? $activeSubscription->price ?? 0;
-            } else {
-                $subscriptionStatus = 'none';
-                $durationDays = 30; // Default duration
-                $expirationDate = $product->created_at->addDays(30);
-            }
-            
-            $isExpired = $expirationDate ? $expirationDate->isPast() : true;
-            $isAdvertActive = $product->status === 'active' && !$isExpired;
-            
-            return [
-                'id' => $product->id,
-                'title' => $product->title,
-                'category' => $product->category->name ?? 'N/A',
-                'created_at' => $product->created_at,
-                'duration_days' => $durationDays,
-                'expiration_date' => $expirationDate,
-                'amount_paid' => $amountPaid,
-                'is_expired' => $isExpired,
-                'advert_status' => $product->status,
-                'subscription_status' => $subscriptionStatus,
-                'is_active' => $isAdvertActive,
-                'days_until_expiry' => $expirationDate ? now()->diffInDays($expirationDate, false) : null,
-            ];
-        });
+        // Apply subscription existence filter
+        if ($statusFilter === 'active') {
+            $vendorsQuery->whereHas('subscriptions', function ($query) {
+                $query->where('status', 'active')
+                    ->where('expires_at', '>', now());
+            });
+        } elseif ($statusFilter === 'inactive') {
+            $vendorsQuery->where(function ($query) {
+                $query->doesntHave('subscriptions')
+                    ->orWhereHas('subscriptions', function ($q) {
+                        $q->where('status', '!=', 'active')
+                            ->orWhere('expires_at', '<=', now());
+                    });
+            });
+        }
 
-        // Calculate totals
-        $totalAmountPaid = $productsWithDuration->sum('amount_paid');
-        $activeAdsCount = $productsWithDuration->where('is_active', true)->count();
-        $inactiveAdsCount = $productsWithDuration->where('is_active', false)->count();
+        // Apply search filter
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $vendorsQuery->where(function ($query) use ($search) {
+                $query->where('business_name', 'like', "%$search%")
+                    ->orWhere('full_name', 'like', "%$search%")
+                    ->orWhere('email', 'like', "%$search%")
+                    ->orWhere('phone', 'like', "%$search%");
+            });
+        }
 
-        return [
-            'vendor' => [
-                'id' => $vendor->id,
-                'business_name' => $vendor->business_name,
-                'full_name' => $vendor->full_name,
-                'registration_date' => $vendor->created_at,
-                'email' => $vendor->email,
-                'phone' => $vendor->phone,
-                'whatsapp' => $vendor->whatsapp_number,
-                'active_contact' => $vendor->phone ?: $vendor->whatsapp_number ?: $vendor->email,
-            ],
-            'subscription' => $activeSubscription ? [
-                'plan_name' => $activeSubscription->plan_name,
-                'price' => $activeSubscription->price,
-                'amount_paid' => $activeSubscription->amount_paid,
-                'status' => $activeSubscription->status,
-                'starts_at' => $activeSubscription->created_at,
-                'expires_at' => $activeSubscription->expires_at,
-                'duration_days' => $activeSubscription->created_at->diffInDays($activeSubscription->expires_at),
-                'is_active' => $hasActiveSubscription,
-            ] : null,
-            'products' => $productsWithDuration,
-            'total_active_ads' => $activeAdsCount,
-            'total_inactive_ads' => $inactiveAdsCount,
-            'total_amount_paid' => $totalAmountPaid,
-            'vendor_status' => $hasActiveSubscription ? 'active' : 'inactive',
-        ];
-    });
+        // Apply sorting
+        $sort = $request->get('sort', 'newest');
+        switch ($sort) {
+            case 'oldest':
+                $vendorsQuery->orderBy('created_at', 'asc');
+                break;
+            case 'most_ads':
+                $vendorsQuery->withCount(['products as active_products_count' => function ($query) {
+                    $query->where('status', 'active');
+                }])->orderBy('active_products_count', 'desc');
+                break;
+            case 'highest_paid':
+                $vendorsQuery->withSum(['subscriptions as total_paid_sum' => function ($query) {
+                    $query->where('status', 'active');
+                }], 'amount_paid')->orderBy('total_paid_sum', 'desc');
+                break;
+            default:
+                $vendorsQuery->orderBy('created_at', 'desc');
+                break;
+        }
 
-    // Filtering options
-    $filters = [
-        'sort' => $sort,
-        'search' => $request->get('search', ''),
-        'status' => $statusFilter,
-    ];
+        $vendors = $vendorsQuery->paginate(50);
 
-    return view('admin.vendor-advert-report', compact('vendorReports', 'vendors', 'filters'));
-}
+        // Process vendor data for the view
+        $vendorReports = $vendors->map(function ($vendor) use ($statusFilter) {
+            // Get most recent subscription
+            $activeSubscription = $vendor->subscriptions->first();
+            $hasActiveSubscription = $activeSubscription &&
+                $activeSubscription->status === 'active' &&
+                $activeSubscription->expires_at > now();
 
-/**
- * Export vendor advert report to CSV with status filter
- */
-public function exportVendorAdvertReport(Request $request)
-{
-    $statusFilter = $request->get('status', 'all');
-    
-    $vendorsQuery = User::where('user_type', 'vendor')
-        ->with(['subscriptions', 'products.category']);
-
-    // Apply status filter
-    if ($statusFilter === 'active') {
-        $vendorsQuery->whereHas('subscriptions', function ($query) {
-            $query->where('status', 'active')
-                  ->where('expires_at', '>', now());
-        })->whereHas('products', function ($query) {
-            $query->where('status', 'active');
-        });
-    } elseif ($statusFilter === 'inactive') {
-        $vendorsQuery->where(function ($query) {
-            $query->doesntHave('subscriptions')
-                  ->orWhereHas('subscriptions', function ($q) {
-                      $q->where('status', '!=', 'active')
-                        ->orWhere('expires_at', '<=', now());
-                  });
-        });
-    }
-
-    $vendors = $vendorsQuery->orderBy('created_at', 'desc')->get();
-
-    $statusText = $statusFilter === 'all' ? 'all' : ($statusFilter === 'active' ? 'active' : 'inactive');
-    $fileName = "vendor-advert-report-{$statusText}-" . date('Y-m-d') . '.csv';
-    
-    $headers = [
-        'Content-Type' => 'text/csv',
-        'Content-Disposition' => 'attachment; filename="' . $fileName . '"',
-    ];
-
-    $callback = function () use ($vendors, $statusFilter) {
-        $file = fopen('php://output', 'w');
-        
-        // Add CSV headers
-        fputcsv($file, [
-            'Vendor ID',
-            'Business Name',
-            'Vendor Name',
-            'Registration Date',
-            'Email',
-            'Contact Number',
-            'Vendor Status',
-            'Advert ID',
-            'Advert Title',
-            'Category',
-            'Advert Created',
-            'Advert Status',
-            'Duration (Days)',
-            'Amount Paid',
-            'Expiration Date',
-            'Days Until Expiry',
-            'Subscription Status',
-            'Subscription Plan',
-            'Subscription Start',
-            'Subscription End'
-        ]);
-
-        foreach ($vendors as $vendor) {
-            $activeSubscription = $vendor->subscriptions->sortByDesc('created_at')->first();
-            $hasActiveSubscription = $activeSubscription && 
-                                   $activeSubscription->status === 'active' && 
-                                   $activeSubscription->expires_at > now();
-            
-            $vendorStatus = $hasActiveSubscription ? 'Active' : 'Inactive';
-            
             // Get products based on status filter
             $products = $vendor->products;
             if ($statusFilter === 'active') {
@@ -1588,45 +1418,318 @@ public function exportVendorAdvertReport(Request $request)
                 $products = $products->where('status', '!=', 'active');
             }
 
-            foreach ($products as $product) {
+            // Calculate advert durations for each product
+            $productsWithDuration = $products->map(function ($product) use ($activeSubscription, $hasActiveSubscription) {
+                // Calculate duration (in days) based on subscription or product creation
+                $durationDays = 0;
                 $expirationDate = null;
                 $amountPaid = 0;
-                $durationDays = 0;
-                $subscriptionStatus = 'None';
-                $daysUntilExpiry = null;
-                
-                if ($activeSubscription) {
-                    $subscriptionStatus = $activeSubscription->status;
+                $subscriptionStatus = 'none';
+
+                if ($hasActiveSubscription) {
+                    $subscriptionStatus = 'active';
+                    $startDate = $activeSubscription->created_at;
+                    $expirationDate = $activeSubscription->expires_at;
+                    $durationDays = $startDate->diffInDays($expirationDate);
+                    $amountPaid = $activeSubscription->amount_paid ?? $activeSubscription->price ?? 0;
+                } elseif ($activeSubscription) {
+                    $subscriptionStatus = 'inactive';
                     $expirationDate = $activeSubscription->expires_at;
                     $durationDays = $activeSubscription->created_at->diffInDays($expirationDate);
                     $amountPaid = $activeSubscription->amount_paid ?? $activeSubscription->price ?? 0;
-                    
-                    if ($expirationDate) {
+                } else {
+                    $subscriptionStatus = 'none';
+                    $durationDays = 30; // Default duration
+                    $expirationDate = $product->created_at->addDays(30);
+                }
+
+                $isExpired = $expirationDate ? $expirationDate->isPast() : true;
+                $isAdvertActive = $product->status === 'active' && !$isExpired;
+
+                return [
+                    'id' => $product->id,
+                    'title' => $product->title,
+                    'category' => $product->category->name ?? 'N/A',
+                    'created_at' => $product->created_at,
+                    'duration_days' => $durationDays,
+                    'expiration_date' => $expirationDate,
+                    'amount_paid' => $amountPaid,
+                    'is_expired' => $isExpired,
+                    'advert_status' => $product->status,
+                    'subscription_status' => $subscriptionStatus,
+                    'is_active' => $isAdvertActive,
+                    'days_until_expiry' => $expirationDate ? now()->diffInDays($expirationDate, false) : null,
+                ];
+            });
+
+            // Calculate totals
+            $totalAmountPaid = $productsWithDuration->sum('amount_paid');
+            $activeAdsCount = $productsWithDuration->where('is_active', true)->count();
+            $inactiveAdsCount = $productsWithDuration->where('is_active', false)->count();
+
+            return [
+                'vendor' => [
+                    'id' => $vendor->id,
+                    'business_name' => $vendor->business_name,
+                    'full_name' => $vendor->full_name,
+                    'registration_date' => $vendor->created_at,
+                    'email' => $vendor->email,
+                    'phone' => $vendor->phone,
+                    'whatsapp' => $vendor->whatsapp_number,
+                    'active_contact' => $vendor->phone ?: $vendor->whatsapp_number ?: $vendor->email,
+                ],
+                'subscription' => $activeSubscription ? [
+                    'plan_name' => $activeSubscription->plan_name,
+                    'price' => $activeSubscription->price,
+                    'amount_paid' => $activeSubscription->amount_paid,
+                    'status' => $activeSubscription->status,
+                    'starts_at' => $activeSubscription->created_at,
+                    'expires_at' => $activeSubscription->expires_at,
+                    'duration_days' => $activeSubscription->created_at->diffInDays($activeSubscription->expires_at),
+                    'is_active' => $hasActiveSubscription,
+                ] : null,
+                'products' => $productsWithDuration,
+                'total_active_ads' => $activeAdsCount,
+                'total_inactive_ads' => $inactiveAdsCount,
+                'total_amount_paid' => $totalAmountPaid,
+                'vendor_status' => $hasActiveSubscription ? 'active' : 'inactive',
+            ];
+        });
+
+        // Filtering options
+        $filters = [
+            'sort' => $sort,
+            'search' => $request->get('search', ''),
+            'status' => $statusFilter,
+        ];
+
+        return view('admin.vendor-advert-report', compact('vendorReports', 'vendors', 'filters'));
+    }
+
+    /**
+     * Export vendor advert report to CSV with status filter
+     */
+    public function exportVendorAdvertReport(Request $request)
+    {
+        $statusFilter = $request->get('status', 'all');
+
+        $vendorsQuery = User::where('user_type', 'vendor')
+            ->with(['subscriptions', 'products.category']);
+
+        // Apply status filter
+        if ($statusFilter === 'active') {
+            $vendorsQuery->whereHas('subscriptions', function ($query) {
+                $query->where('status', 'active')
+                    ->where('expires_at', '>', now());
+            })->whereHas('products', function ($query) {
+                $query->where('status', 'active');
+            });
+        } elseif ($statusFilter === 'inactive') {
+            $vendorsQuery->where(function ($query) {
+                $query->doesntHave('subscriptions')
+                    ->orWhereHas('subscriptions', function ($q) {
+                        $q->where('status', '!=', 'active')
+                            ->orWhere('expires_at', '<=', now());
+                    });
+            });
+        }
+
+        $vendors = $vendorsQuery->orderBy('created_at', 'desc')->get();
+
+        $statusText = $statusFilter === 'all' ? 'all' : ($statusFilter === 'active' ? 'active' : 'inactive');
+        $fileName = "vendor-advert-report-{$statusText}-" . date('Y-m-d') . '.csv';
+
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="' . $fileName . '"',
+        ];
+
+        $callback = function () use ($vendors, $statusFilter) {
+            $file = fopen('php://output', 'w');
+
+            // Add CSV headers
+            fputcsv($file, [
+                'Vendor ID',
+                'Business Name',
+                'Vendor Name',
+                'Registration Date',
+                'Email',
+                'Contact Number',
+                'Vendor Status',
+                'Advert ID',
+                'Advert Title',
+                'Category',
+                'Advert Created',
+                'Advert Status',
+                'Duration (Days)',
+                'Amount Paid',
+                'Expiration Date',
+                'Days Until Expiry',
+                'Subscription Status',
+                'Subscription Plan',
+                'Subscription Start',
+                'Subscription End'
+            ]);
+
+            foreach ($vendors as $vendor) {
+                $activeSubscription = $vendor->subscriptions->sortByDesc('created_at')->first();
+                $hasActiveSubscription = $activeSubscription &&
+                    $activeSubscription->status === 'active' &&
+                    $activeSubscription->expires_at > now();
+
+                $vendorStatus = $hasActiveSubscription ? 'Active' : 'Inactive';
+
+                // Get products based on status filter
+                $products = $vendor->products;
+                if ($statusFilter === 'active') {
+                    $products = $products->where('status', 'active');
+                } elseif ($statusFilter === 'inactive') {
+                    $products = $products->where('status', '!=', 'active');
+                }
+
+                foreach ($products as $product) {
+                    $expirationDate = null;
+                    $amountPaid = 0;
+                    $durationDays = 0;
+                    $subscriptionStatus = 'None';
+                    $daysUntilExpiry = null;
+
+                    if ($activeSubscription) {
+                        $subscriptionStatus = $activeSubscription->status;
+                        $expirationDate = $activeSubscription->expires_at;
+                        $durationDays = $activeSubscription->created_at->diffInDays($expirationDate);
+                        $amountPaid = $activeSubscription->amount_paid ?? $activeSubscription->price ?? 0;
+
+                        if ($expirationDate) {
+                            $daysUntilExpiry = now()->diffInDays($expirationDate, false);
+                            $daysUntilExpiry = $daysUntilExpiry > 0 ? $daysUntilExpiry : 0;
+                        }
+                    } else {
+                        $expirationDate = $product->created_at->addDays(30);
+                        $durationDays = 30;
                         $daysUntilExpiry = now()->diffInDays($expirationDate, false);
                         $daysUntilExpiry = $daysUntilExpiry > 0 ? $daysUntilExpiry : 0;
                     }
+
+                    $advertStatus = $product->status === 'active' ? 'Active' : 'Inactive';
+                    $isExpired = $expirationDate ? $expirationDate->isPast() : true;
+
+                    if ($isExpired && $product->status === 'active') {
+                        $advertStatus = 'Expired';
+                    }
+
+                    fputcsv($file, [
+                        $vendor->id,
+                        $vendor->business_name ?? 'N/A',
+                        $vendor->full_name,
+                        $vendor->created_at->format('Y-m-d'),
+                        $vendor->email,
+                        $vendor->phone ?: $vendor->whatsapp_number ?: 'N/A',
+                        $vendorStatus,
+                        $product->id,
+                        $product->title,
+                        $product->category->name ?? 'N/A',
+                        $product->created_at->format('Y-m-d'),
+                        $advertStatus,
+                        $durationDays,
+                        number_format($amountPaid, 2),
+                        $expirationDate ? $expirationDate->format('Y-m-d') : 'N/A',
+                        $daysUntilExpiry,
+                        $subscriptionStatus,
+                        $activeSubscription->plan_name ?? 'N/A',
+                        $activeSubscription ? $activeSubscription->created_at->format('Y-m-d') : 'N/A',
+                        $activeSubscription ? $activeSubscription->expires_at->format('Y-m-d') : 'N/A'
+                    ]);
+                }
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
+    /**
+     * Export specific vendor report (single vendor)
+     */
+    public function exportVendorReport($vendorId)
+    {
+        $vendor = User::where('user_type', 'vendor')
+            ->where('id', $vendorId)
+            ->with(['subscriptions', 'products.category'])
+            ->firstOrFail();
+
+        $fileName = "vendor-report-{$vendor->id}-" . date('Y-m-d') . '.csv';
+
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="' . $fileName . '"',
+        ];
+
+        $callback = function () use ($vendor) {
+            $file = fopen('php://output', 'w');
+
+            // Vendor Information Header
+            fputcsv($file, ['VENDOR INFORMATION']);
+            fputcsv($file, ['Business Name', $vendor->business_name ?? 'N/A']);
+            fputcsv($file, ['Full Name', $vendor->full_name]);
+            fputcsv($file, ['Email', $vendor->email]);
+            fputcsv($file, ['Phone', $vendor->phone ?? 'N/A']);
+            fputcsv($file, ['WhatsApp', $vendor->whatsapp_number ?? 'N/A']);
+            fputcsv($file, ['Registration Date', $vendor->created_at->format('Y-m-d H:i:s')]);
+            fputcsv($file, []); // Empty row
+
+            // Subscription Information
+            $activeSubscription = $vendor->subscriptions->first();
+            fputcsv($file, ['SUBSCRIPTION INFORMATION']);
+            if ($activeSubscription) {
+                fputcsv($file, ['Plan Name', $activeSubscription->plan_name]);
+                fputcsv($file, ['Status', $activeSubscription->status]);
+                fputcsv($file, ['Amount Paid', number_format($activeSubscription->amount_paid ?? $activeSubscription->price ?? 0, 2)]);
+                fputcsv($file, ['Start Date', $activeSubscription->created_at->format('Y-m-d H:i:s')]);
+                fputcsv($file, ['Expiry Date', $activeSubscription->expires_at->format('Y-m-d H:i:s')]);
+                fputcsv($file, ['Duration (Days)', $activeSubscription->created_at->diffInDays($activeSubscription->expires_at)]);
+                fputcsv($file, ['Is Active', $activeSubscription->expires_at > now() ? 'Yes' : 'No']);
+            } else {
+                fputcsv($file, ['No active subscription found']);
+            }
+            fputcsv($file, []); // Empty row
+
+            // Advert Details Header
+            fputcsv($file, ['ADVERT DETAILS']);
+            fputcsv($file, [
+                'Advert ID',
+                'Title',
+                'Category',
+                'Created',
+                'Status',
+                'Duration (Days)',
+                'Amount Paid',
+                'Expiration Date',
+                'Days Until Expiry'
+            ]);
+
+            foreach ($vendor->products as $product) {
+                $expirationDate = null;
+                $amountPaid = 0;
+                $durationDays = 0;
+
+                if ($activeSubscription) {
+                    $expirationDate = $activeSubscription->expires_at;
+                    $durationDays = $activeSubscription->created_at->diffInDays($expirationDate);
+                    $amountPaid = $activeSubscription->amount_paid ?? $activeSubscription->price ?? 0;
                 } else {
                     $expirationDate = $product->created_at->addDays(30);
                     $durationDays = 30;
-                    $daysUntilExpiry = now()->diffInDays($expirationDate, false);
-                    $daysUntilExpiry = $daysUntilExpiry > 0 ? $daysUntilExpiry : 0;
                 }
-                
-                $advertStatus = $product->status === 'active' ? 'Active' : 'Inactive';
-                $isExpired = $expirationDate ? $expirationDate->isPast() : true;
-                
-                if ($isExpired && $product->status === 'active') {
+
+                $daysUntilExpiry = $expirationDate ? now()->diffInDays($expirationDate, false) : null;
+                $advertStatus = $product->status;
+                if ($expirationDate && $expirationDate->isPast() && $product->status === 'active') {
                     $advertStatus = 'Expired';
                 }
 
                 fputcsv($file, [
-                    $vendor->id,
-                    $vendor->business_name ?? 'N/A',
-                    $vendor->full_name,
-                    $vendor->created_at->format('Y-m-d'),
-                    $vendor->email,
-                    $vendor->phone ?: $vendor->whatsapp_number ?: 'N/A',
-                    $vendorStatus,
                     $product->id,
                     $product->title,
                     $product->category->name ?? 'N/A',
@@ -1635,119 +1738,13 @@ public function exportVendorAdvertReport(Request $request)
                     $durationDays,
                     number_format($amountPaid, 2),
                     $expirationDate ? $expirationDate->format('Y-m-d') : 'N/A',
-                    $daysUntilExpiry,
-                    $subscriptionStatus,
-                    $activeSubscription->plan_name ?? 'N/A',
-                    $activeSubscription ? $activeSubscription->created_at->format('Y-m-d') : 'N/A',
-                    $activeSubscription ? $activeSubscription->expires_at->format('Y-m-d') : 'N/A'
+                    $daysUntilExpiry
                 ]);
             }
-        }
 
-        fclose($file);
-    };
+            fclose($file);
+        };
 
-    return response()->stream($callback, 200, $headers);
-}
-
-/**
- * Export specific vendor report (single vendor)
- */
-public function exportVendorReport($vendorId)
-{
-    $vendor = User::where('user_type', 'vendor')
-        ->where('id', $vendorId)
-        ->with(['subscriptions', 'products.category'])
-        ->firstOrFail();
-
-    $fileName = "vendor-report-{$vendor->id}-" . date('Y-m-d') . '.csv';
-    
-    $headers = [
-        'Content-Type' => 'text/csv',
-        'Content-Disposition' => 'attachment; filename="' . $fileName . '"',
-    ];
-
-    $callback = function () use ($vendor) {
-        $file = fopen('php://output', 'w');
-        
-        // Vendor Information Header
-        fputcsv($file, ['VENDOR INFORMATION']);
-        fputcsv($file, ['Business Name', $vendor->business_name ?? 'N/A']);
-        fputcsv($file, ['Full Name', $vendor->full_name]);
-        fputcsv($file, ['Email', $vendor->email]);
-        fputcsv($file, ['Phone', $vendor->phone ?? 'N/A']);
-        fputcsv($file, ['WhatsApp', $vendor->whatsapp_number ?? 'N/A']);
-        fputcsv($file, ['Registration Date', $vendor->created_at->format('Y-m-d H:i:s')]);
-        fputcsv($file, []); // Empty row
-        
-        // Subscription Information
-        $activeSubscription = $vendor->subscriptions->first();
-        fputcsv($file, ['SUBSCRIPTION INFORMATION']);
-        if ($activeSubscription) {
-            fputcsv($file, ['Plan Name', $activeSubscription->plan_name]);
-            fputcsv($file, ['Status', $activeSubscription->status]);
-            fputcsv($file, ['Amount Paid', number_format($activeSubscription->amount_paid ?? $activeSubscription->price ?? 0, 2)]);
-            fputcsv($file, ['Start Date', $activeSubscription->created_at->format('Y-m-d H:i:s')]);
-            fputcsv($file, ['Expiry Date', $activeSubscription->expires_at->format('Y-m-d H:i:s')]);
-            fputcsv($file, ['Duration (Days)', $activeSubscription->created_at->diffInDays($activeSubscription->expires_at)]);
-            fputcsv($file, ['Is Active', $activeSubscription->expires_at > now() ? 'Yes' : 'No']);
-        } else {
-            fputcsv($file, ['No active subscription found']);
-        }
-        fputcsv($file, []); // Empty row
-        
-        // Advert Details Header
-        fputcsv($file, ['ADVERT DETAILS']);
-        fputcsv($file, [
-            'Advert ID',
-            'Title',
-            'Category',
-            'Created',
-            'Status',
-            'Duration (Days)',
-            'Amount Paid',
-            'Expiration Date',
-            'Days Until Expiry'
-        ]);
-
-        foreach ($vendor->products as $product) {
-            $expirationDate = null;
-            $amountPaid = 0;
-            $durationDays = 0;
-            
-            if ($activeSubscription) {
-                $expirationDate = $activeSubscription->expires_at;
-                $durationDays = $activeSubscription->created_at->diffInDays($expirationDate);
-                $amountPaid = $activeSubscription->amount_paid ?? $activeSubscription->price ?? 0;
-            } else {
-                $expirationDate = $product->created_at->addDays(30);
-                $durationDays = 30;
-            }
-            
-            $daysUntilExpiry = $expirationDate ? now()->diffInDays($expirationDate, false) : null;
-            $advertStatus = $product->status;
-            if ($expirationDate && $expirationDate->isPast() && $product->status === 'active') {
-                $advertStatus = 'Expired';
-            }
-
-            fputcsv($file, [
-                $product->id,
-                $product->title,
-                $product->category->name ?? 'N/A',
-                $product->created_at->format('Y-m-d'),
-                $advertStatus,
-                $durationDays,
-                number_format($amountPaid, 2),
-                $expirationDate ? $expirationDate->format('Y-m-d') : 'N/A',
-                $daysUntilExpiry
-            ]);
-        }
-
-        fclose($file);
-    };
-
-    return response()->stream($callback, 200, $headers);
-}
-    
-    
+        return response()->stream($callback, 200, $headers);
+    }
 }
