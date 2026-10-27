@@ -711,15 +711,16 @@ private function generateUniqueSlug($title)
     public function updateProduct(Request $request, Product $product)
     {
         try {
-            // Verify ownership
-            $marketer = Auth::user()->marketer;
-            if ($product->user->referred_by !== Auth::id() || Auth::user()->user_type !== 'admin') {
+                        // Admins can edit any product, marketers only products of vendors they referred
+            $user = Auth::user();
+            $isReferrer = (int) $product->user?->referred_by === (int) $user->id;
+
+            if (! $user->isAdmin() && ! $isReferrer) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Unauthorized action'
                 ], 403);
             }
-
             $validated = $request->validate([
                 'title' => 'required|string|max:255',
                 'category_id' => 'required|exists:categories,id',

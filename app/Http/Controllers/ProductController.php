@@ -1206,8 +1206,8 @@ class ProductController extends Controller
                 $newSlug = $this->generateUniqueSlug($request->title);
             }
 
-            $user = Auth::user();
-            $storeId = $user->store ? $user->store->id : null;
+            // Keep the product in its own store, an admin editing it has no store of their own
+            $storeId = $product->store_id;
 
             // Update product
             $product->update([
