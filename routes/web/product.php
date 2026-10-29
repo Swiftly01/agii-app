@@ -17,6 +17,12 @@ Route::get('/home/{category?}', [ProductController::class, 'homeByCategory'])
     ->where('category', '[A-Za-z0-9\-]+')
     ->name('home.category');
 
+Route::middleware(['auth', CheckSubscription::class])->group(function () {
+    Route::get('/products/{slug}/edit', [ProductController::class, 'edit'])->name('products.edit');
+    Route::put('/products/{slug}', [ProductController::class, 'update'])->name('products.update');
+    Route::delete('/products/{slug}', [ProductController::class, 'destroy'])->name('products.destroy');
+});
+
 // PRODUCTS LISTING
 Route::get('/products', [ProductController::class, 'index'])->name('products.index');
 Route::get('/products/{category}', [ProductController::class, 'index'])
@@ -61,10 +67,7 @@ Route::middleware(['auth'])->group(function () {
             Route::post('/products', [ProductController::class, 'store'])->name('products.store');
         });
 
-        // EDIT / UPDATE / DELETE (MUST COME BEFORE wildcard category route)
-        Route::get('/products/{slug}/edit', [ProductController::class, 'edit'])->name('products.edit');
-        Route::put('/products/{slug}', [ProductController::class, 'update'])->name('products.update');
-        Route::delete('/products/{slug}', [ProductController::class, 'destroy'])->name('products.destroy');
+        
     });
 
     // AJAX CATEGORY / SPECIFICATION

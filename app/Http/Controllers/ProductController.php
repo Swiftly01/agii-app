@@ -603,7 +603,15 @@ class ProductController extends Controller
     {
         $product = Product::with(['user', 'category', 'reviews' => fn($q) => $q->with('user')->latest()])
             ->where('slug', $slug)
-            ->where('status', 'active')
+            ->when(
+                ! (Auth::check() && Auth::user()->isAdmin()),
+                fn($q) => $q->where(function ($q) {
+                    $q->where('status', 'active');
+                    if (Auth::check()) {
+                        $q->orWhere('user_id', Auth::id());
+                    }
+                })
+            )
             ->firstOrFail();
 
         // The current customer's own review (if any), so the form can be
