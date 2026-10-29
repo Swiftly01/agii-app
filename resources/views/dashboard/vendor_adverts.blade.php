@@ -38,7 +38,7 @@
                         <div class="col-lg-4 col-md-6 mb-4">
                             <div class="card product-card h-100 border-0 shadow-sm">
                                 <div class="position-relative">
-                                    <img src="{{ $product->images[0] ?? 'https://via.placeholder.com/300x200?text=No+Image' }}"
+                                    <img src="{{ isset($product->images[0]) ? asset($product->images[0]) : 'https://via.placeholder.com/300x200?text=No+Image' }}"
                                         class="card-img-top" alt="{{ $product->title }}"
                                         style="height: 200px; object-fit: cover;">
                                     <div class="position-absolute top-0 end-0 m-2">
