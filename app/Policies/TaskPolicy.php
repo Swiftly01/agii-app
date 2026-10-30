@@ -11,12 +11,12 @@ class TaskPolicy
     // Staff are users of type marketer, admins see everything
     public function viewAny(User $user): bool
     {
-        return $user->isAdmin() || $user->isMarketer();
+        return $user->isAdmin() || $user->canWorkTasks();
     }
 
     public function view(User $user, Task $task): bool
     {
-        return $user->isAdmin() || $this->isAssignee($user, $task);
+        return $user->isAdmin() || $user->canWorkTasks();
     }
 
     // Only admins hand out work

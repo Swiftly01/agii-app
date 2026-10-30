@@ -389,7 +389,20 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return $this->user_type === 'customer';
     }
-    
+
+    // Roles that receive and work on tasks, one place to change when a new role joins
+    public const TASK_ROLES = ['marketer', 'staff'];
+
+    public function canWorkTasks(): bool
+    {
+        return in_array($this->user_type, self::TASK_ROLES, true);
+    }
+
+    public function isStaff()
+    {
+        return $this->user_type === 'staff';
+    }
+
     public function isAdmin()
     {
         return $this->user_type === 'admin';
@@ -470,19 +483,19 @@ class User extends Authenticatable implements MustVerifyEmail
 
         return $this->marketer->getPerformanceStats();
     }
-    
-        // app/Models/User.php
+
+    // app/Models/User.php
     public function conversations()
     {
         return $this->belongsToMany(Conversation::class, 'participants');
     }
-    
+
     public function messages()
     {
         return $this->hasMany(Message::class);
     }
-    
-      public function assignedTasks()
+
+    public function assignedTasks()
     {
         return $this->hasMany(Task::class, 'marketer_id');
     }
@@ -518,8 +531,8 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return $this->assignedTasks()->where('status', 'completed');
     }
-    
-    
+
+
     // User.php
     public function marketercommissionTransactions()
     {
@@ -532,13 +545,13 @@ class User extends Authenticatable implements MustVerifyEmail
             'id'             // Local key on marketers table
         );
     }
-    
+
     // app/Models/User.php
     public function staffProfile()
     {
         return $this->hasOne(StaffProfile::class);
     }
-  
+
 
     /**
      * Check if user is a marketer.

@@ -77,7 +77,7 @@ class StaffController extends Controller
             'last_name' => $request->surname,
             'phone' => $application->contact_number,
             'email' => $request->email,
-            'user_type' => 'marketer',
+            'user_type' => 'staff',
             'password' => Hash::make($request->password),
             'role' => $request->role ?? 'staff',
         ]);

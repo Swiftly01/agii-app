@@ -32,7 +32,7 @@ Route::get('/home', function () {
 | STAFF PORTAL ROUTES (NO NAME CHANGES)
 |--------------------------------------------------------------------------
 */
-Route::middleware(['auth'])
+Route::middleware(['auth', 'role:staff'])
     ->prefix('staff')
     ->name('staff.')
     ->group(function () {

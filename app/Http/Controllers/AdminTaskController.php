@@ -63,7 +63,7 @@ class AdminTaskController extends Controller
     private function staff(bool $withOpenTaskCount = false)
     {
         return User::query()
-            ->where('user_type', 'marketer')
+            ->whereIn('user_type', User::TASK_ROLES)
             ->select('id', 'first_name', 'last_name')
             ->when($withOpenTaskCount, fn ($q) => $q->withCount([
                 'assignedTasks as open_tasks_count' => fn ($t) => $t->where('status', '!=', TaskStatus::Completed->value),

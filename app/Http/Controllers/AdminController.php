@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Category;
 use App\Models\Marketer;
+use App\Models\StaffProfile;
 use App\Models\User;
 use App\Models\Product;
 use App\Models\Transaction;
@@ -439,15 +440,20 @@ class AdminController extends Controller
         $request->validate([
             'user_ids' => 'required|array',
             'user_ids.*' => 'exists:users,id',
-            'user_type' => 'required|in:admin,vendor,customer,marketer'
+            'user_type' => 'required|in:admin,vendor,customer,marketer,staff'
         ]);
 
-        User::whereIn('id', $request->user_ids)
-            ->update(['user_type' => $request->user_type]);
+        $users = User::whereIn('id', $request->user_ids)->get();
+
+        foreach ($users as $user) {
+            $user->user_type = $request->user_type;
+            $user->save();
+            $this->provisionRoleRecords($user);
+        }
 
         return response()->json([
             'success' => true,
-            'message' => 'Roles updated for ' . count($request->user_ids) . ' users.'
+            'message' => 'Roles updated for ' . $users->count() . ' users.'
         ]);
     }
 
@@ -509,21 +515,32 @@ class AdminController extends Controller
     public function assignRole(Request $request, $id)
     {
         $request->validate([
-            'user_type' => 'required|in:admin,marketer,customer,vendor'
+            'user_type' => 'required|in:admin,marketer,staff,customer,vendor'
         ]);
 
         $user = User::findOrFail($id);
-        $user->user_type = $request->user_type;
-        $user->save();
 
-        if ($request->user_type === 'marketer') {
+        DB::transaction(function () use ($request, $user) {
+            $user->user_type = $request->user_type;
+            $user->save();
+            $this->provisionRoleRecords($user);
+        });
 
+
+        return back()->with('success', 'User role updated successfully.');
+    }
+
+    /**
+     * Create whatever supporting record a role needs so the user can actually
+     * log in to that role's dashboard. Safe to call repeatedly.
+     */
+    private function provisionRoleRecords(User $user): void
+    {
+        if ($user->user_type === 'marketer') {
             // Prevent duplicate marketer records
-            $marketer = Marketer::where('user_id', $user->id)->first();
-
-            if (!$marketer) {
-                Marketer::create([
-                    'user_id' => $user->id,
+            Marketer::firstOrCreate(
+                ['user_id' => $user->id],
+                [
                     'referral_code' => $this->generateReferralCode($user),
                     'commission_rate' => 10.00,
                     'total_earnings' => 0,
@@ -532,11 +549,33 @@ class AdminController extends Controller
                     'is_active' => 1,
                     'approved_at' => now(),
                     'approved_by' => auth()->id(),
-                ]);
-            }
+                ]
+            );
         }
 
-        return back()->with('success', 'User role updated successfully.');
+        if ($user->user_type === 'staff') {
+            // The staff dashboard and attendance clock read the staff profile.
+            // Restore a soft-deleted profile (keeps attendance history) before creating a new one.
+            $profile = StaffProfile::withTrashed()->where('user_id', $user->id)->first();
+
+            if ($profile) {
+                if ($profile->trashed()) {
+                    $profile->restore();
+                }
+                $profile->update(['status' => 'active']);
+                return;
+            }
+
+            StaffProfile::create([
+                'user_id' => $user->id,
+                'staff_id' => 'STAFF' . date('Ym') . str_pad(StaffProfile::withTrashed()->count() + 1, 4, '0', STR_PAD_LEFT),
+                'department' => 'Unassigned',
+                'designation' => 'Staff',
+                'date_of_employment' => now(),
+                'employment_type' => 'probation',
+                'status' => 'active',
+            ]);
+        }
     }
 
     private function generateReferralCode($user)
@@ -588,7 +627,7 @@ class AdminController extends Controller
      */
     public function createTask()
     {
-        $marketers = User::where('user_type', 'marketer')
+       $marketers = User::whereIn('user_type', User::TASK_ROLES)
             ->with(['staffProfile' => function ($query) {
                 $query->select('id', 'user_id', 'staff_id', 'department');
             }])
@@ -759,7 +798,7 @@ class AdminController extends Controller
     {
         $task = Task::with(['marketer', 'assigner'])->findOrFail($id);
 
-        $marketers = User::where('user_type', 'marketer')
+        $marketers = User::whereIn('user_type', User::TASK_ROLES)
             ->withCount(['assignedTasks' => function ($query) {
                 $query->where('status', '!=', 'completed');
             }])
@@ -951,7 +990,7 @@ class AdminController extends Controller
             return $task;
         });
 
-        $marketers = User::where('user_type', 'marketer')->get();
+        $marketers = User::whereIn('user_type', User::TASK_ROLES)->get();
 
         return view('admin.tasks.index', compact('tasks', 'stats', 'marketers'));
     }

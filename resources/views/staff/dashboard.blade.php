@@ -106,7 +106,7 @@
                                 @if (($stats['overdue_tasks'] ?? 0) > 0)
                                     {{ $stats['overdue_tasks'] }} overdue &middot;
                                 @endif
-                                <a href="{{ route('marketer.tasks.index') }}" class="text-white text-decoration-underline">View my tasks</a>
+                             <a href="{{ route('staff.tasks.index') }}" class="text-white text-decoration-underline">View my tasks</a>
                             </small>
                         </div>
                         <div class="stat-icon">
@@ -949,6 +949,7 @@
                 } else if (title.includes('Leave Balance')) {
                     window.location.href = '{{ route("staff.leave.dashboard") }}';
                 } else if (title.includes('Pending Tasks')) {
+                     window.location.href = '{{ route("staff.tasks.index") }}';
                     
                 } else if (title.includes('Next Payday')) {
                     window.location.href = '{{ route("staff.payroll.dashboard") }}';

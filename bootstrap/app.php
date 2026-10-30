@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\EnsureUserHasRole;
 use App\Http\Middleware\EnsureUserIsAdmin;
 use App\Http\Middleware\EnsureVendorIsApproved;
 use App\Http\Middleware\VendorMiddleware;
@@ -18,6 +19,7 @@ return Application::configure(basePath: dirname(__DIR__))
         'vendor.subscription' => VendorMiddleware::class,
         'vendor.approved' => EnsureVendorIsApproved::class,
         'admin' => EnsureUserIsAdmin::class,
+        'role' => EnsureUserHasRole::class,
     ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

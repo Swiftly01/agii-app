@@ -1,4 +1,4 @@
-@extends('layout.marketer')
+@extends(auth()->user()->isStaff() ? 'layout.staff' : 'layout.marketer')
 
 @section('title', 'New Task - Agii')
 @section('page-title', 'New Task')

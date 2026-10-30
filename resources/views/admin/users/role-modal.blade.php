@@ -21,6 +21,7 @@
                             <option value="vendor">Vendor</option>
                             <option value="customer">Customer</option>
                             <option value="marketer">Marketer</option>
+                            <option value="staff">Staff</option>
                         </select>
                     </div>
 
@@ -82,7 +83,8 @@
             'admin': 'Full system access, can manage all users, products, and settings.',
             'vendor': 'Can list products, manage inventory, and view sales reports.',
             'customer': 'Can browse and purchase products, view order history.',
-            'marketer': 'Can view analytics, manage campaigns, and track leads.'
+            'marketer': 'Can view analytics, manage campaigns, and track leads.',
+            'staff': 'Logs in to the staff dashboard to mark attendance, apply for leave and manage tasks and documents.'
         };
 
         permissionsDiv.innerHTML = permissions[role] || 'Select a role to view permissions.';
