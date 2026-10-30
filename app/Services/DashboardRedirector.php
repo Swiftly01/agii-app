@@ -13,11 +13,9 @@ class DashboardRedirector
   public function redirect(User $user, ?string $successMessage = null): RedirectResponse
   {   
       
-    if ($user->staffProfile) {
-      return redirect()->route('staff.dashboard')->with('success', $successMessage ?? 'Welcome to the staff dashboard!');
-    }
-
     return match ($user->user_type) {
+      'staff' => redirect()->route('staff.dashboard')->with('success', $successMessage ?? 'Welcome to the staff dashboard!'),
+
       'vendor' => redirect()->route('vendor.dashboard')->with('success', $successMessage ?? 'Welcome to your vendor dashboard!'),
 
       'admin' => redirect()

@@ -4,6 +4,7 @@ namespace App\Http\Requests\Tasks;
 
 use App\Enums\TaskPriority;
 use App\Models\Task;
+use App\Models\User;
 use App\Services\Tasks\AssignTaskData;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -19,7 +20,7 @@ class AssignTaskRequest extends FormRequest
     {
         return [
             // Only staff accounts can receive tasks
-            'assignee_id' => ['required', 'integer', Rule::exists('users', 'id')->where('user_type', 'marketer')],
+            'assignee_id' => ['required', 'integer', Rule::exists('users', 'id')->whereIn('user_type', User::TASK_ROLES)],
             'tasks' => ['required', 'array', 'min:1', 'max:20'],
             'tasks.*.title' => ['required', 'string', 'max:255'],
             'tasks.*.description' => ['nullable', 'string', 'max:5000'],

@@ -38,6 +38,7 @@
                             <option value="vendor" {{ request('type') == 'vendor' ? 'selected' : '' }}>Vendor</option>
                             <option value="customer" {{ request('type') == 'customer' ? 'selected' : '' }}>Customer</option>
                             <option value="marketer" {{ request('type') == 'marketer' ? 'selected' : '' }}>Marketer</option>
+                            <option value="staff" {{ request('type') == 'staff' ? 'selected' : '' }}>Staff</option>
                         </select>
                     </div>
                     <div class="col-md-3">
@@ -181,7 +182,7 @@
                                     </td>
                                     <td>
                                         <span
-                                            class="badge bg-{{ $user->user_type === 'admin' ? 'danger' : ($user->user_type === 'vendor' ? 'success' : ($user->user_type === 'marketer' ? 'purple' : 'warning')) }}">
+                                            class="badge bg-{{ $user->user_type === 'admin' ? 'danger' : ($user->user_type === 'vendor' ? 'success' : ($user->user_type === 'marketer' ? 'purple' : ($user->user_type === 'staff' ? 'info' : 'warning'))) }}">
                                             {{ ucfirst($user->user_type) }}
                                         </span>
                                     </td>
@@ -347,6 +348,7 @@
                                 <option value="vendor">Vendor</option>
                                 <option value="customer">Customer</option>
                                 <option value="marketer">Marketer</option>
+                                <option value="staff">Staff</option>
                             </select>
                         </div>
 
@@ -391,6 +393,7 @@
                                 <option value="vendor">Vendor</option>
                                 <option value="customer">Customer</option>
                                 <option value="marketer">Marketer</option>
+                                <option value="staff">Staff</option>
                             </select>
                         </div>
 
@@ -523,7 +526,7 @@
             <div class="d-flex align-items-center">
                 <div>
                     <h6 class="mb-1">${userName}</h6>
-                    <span class="badge bg-${currentRole === 'admin' ? 'danger' : (currentRole === 'vendor' ? 'success' : (currentRole === 'marketer' ? 'purple' : 'warning'))}">
+                    <span class="badge bg-${currentRole === 'admin' ? 'danger' : (currentRole === 'vendor' ? 'success' : (currentRole === 'marketer' ? 'purple' : (currentRole === 'staff' ? 'info' : 'warning')))}">
                         Current: ${currentRole.charAt(0).toUpperCase() + currentRole.slice(1)}
                     </span>
                 </div>
@@ -746,7 +749,8 @@
                 'admin': 'Full system access, can manage all users, products, and settings.',
                 'vendor': 'Can list products, manage inventory, and view sales reports.',
                 'customer': 'Can browse and purchase products, view order history.',
-                'marketer': 'Can view analytics, manage campaigns, and track leads.'
+                'marketer': 'Can view analytics, manage campaigns, and track leads.',
+                'staff': 'Logs in to the staff dashboard to mark attendance, apply for leave and manage tasks and documents.'
             };
 
             permissionsDiv.innerHTML = permissions[role] || 'Select a role to view permissions.';
@@ -759,7 +763,8 @@
                 'admin': 'Full system access, can manage all users, products, and settings.',
                 'vendor': 'Can list products, manage inventory, and view sales reports.',
                 'customer': 'Can browse and purchase products, view order history.',
-                'marketer': 'Can view analytics, manage campaigns, and track leads.'
+                'marketer': 'Can view analytics, manage campaigns, and track leads.',
+                'staff': 'Logs in to the staff dashboard to mark attendance, apply for leave and manage tasks and documents.'
             };
 
             permissionsDiv.innerHTML = permissions[role] || 'Select a role to view permissions.';

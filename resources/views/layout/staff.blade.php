@@ -219,7 +219,7 @@
                 </li>
 
 
-                <li class="{{ request()->routeIs('staff.payroll.*') ? 'active' : '' }}">
+                {{-- <li class="{{ request()->routeIs('staff.payroll.*') ? 'active' : '' }}">
                     <a href="#documentsSubmenuing" data-bs-toggle="collapse" aria-expanded="false"
                         class="dropdown-toggle">
                         <i class="fas fa-store"></i>
@@ -235,7 +235,7 @@
 
 
                     </ul>
-                </li>
+                </li> --}}
 
 
 
