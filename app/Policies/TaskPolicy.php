@@ -8,7 +8,7 @@ use App\Models\User;
 
 class TaskPolicy
 {
-    // Staff are users of type marketer, admins see everything
+    // Staff and marketers work tasks, admins see everything
     public function viewAny(User $user): bool
     {
         return $user->isAdmin() || $user->canWorkTasks();
@@ -39,7 +39,7 @@ class TaskPolicy
         // Staff and admins can create tasks, staff only ever for themselves
     public function create(User $user): bool
     {
-        return $user->isAdmin() || $user->isMarketer();
+        return $user->isAdmin() || $user->canWorkTasks();
     }
 
         // Staff may edit or delete only tasks they created for themselves and have not started
