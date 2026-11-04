@@ -13,10 +13,18 @@ use Illuminate\Support\Facades\Mail;
 use App\Models\Marketer;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use App\Services\Staff\StaffCredentialService;
+use App\Services\Staff\StaffDepartments;
+use Throwable;
 
 
 class StaffController extends Controller
 {
+    public function __construct(
+        private readonly StaffDepartments $departments,
+        private readonly StaffCredentialService $credentials,
+    ) {}
+
     // Show all staff
     public function index()
     {
@@ -31,7 +39,7 @@ class StaffController extends Controller
     public function createFromApplication($applicationId)
     {
         $application = EmploymentApplication::findOrFail($applicationId);
-        $departments = ['HR', 'IT', 'Finance', 'Operations', 'Marketing', 'Sales', 'Editor', 'Reporter'];
+        $departments = $this->departments->options();
         
         return view('staff.create-from-application', compact('application', 'departments'));
     }
@@ -54,18 +62,20 @@ class StaffController extends Controller
         'employment_type' => 'required|in:full_time,part_time,contract,probation',
         'salary' => 'nullable|numeric',
         'email' => 'required|email|unique:users,email',
-        'password' => 'required|min:8',
+        // Left blank, a password is generated and emailed
+        'password' => 'nullable|min:8',
+        'other_department' => 'required_if:department,' . StaffDepartments::OTHER . '|nullable|string|max:255',
     ]);
 
     DB::beginTransaction();
 
     try {
 
-        // Handle "other" department
-        $department = $request->department;
-        if ($request->department === 'other' && $request->filled('other_department')) {
-            $department = $request->other_department;
-        }
+        $department = $this->departments->resolve($request->department, $request->other_department);
+
+        $plainPassword = $request->filled('password')
+            ? $request->password
+            : $this->credentials->generatePassword();
 
         $application = EmploymentApplication::findOrFail(
             $request->employment_application_id
@@ -78,7 +88,7 @@ class StaffController extends Controller
             'phone' => $application->contact_number,
             'email' => $request->email,
             'user_type' => 'staff',
-            'password' => Hash::make($request->password),
+            'password' => Hash::make($plainPassword),
             'role' => $request->role ?? 'staff',
         ]);
 
@@ -155,17 +165,8 @@ class StaffController extends Controller
 
         DB::commit();
 
-        // Send email AFTER commit (important)
-        if (!empty($application->email)) {
-            $this->sendWelcomeEmail(
-                $application->email,
-                $request->password,
-                $staff
-            );
-        }
-
-        return redirect()->route('admin.staff.index')
-            ->with('success', 'Staff member added successfully! Login credentials sent to ' . $request->email);
+        // Send email AFTER commit so a mail failure never undoes a created account
+        return $this->redirectAfterCreate($user, $plainPassword);
 
     } catch (\Exception $e) {
 
@@ -222,16 +223,13 @@ public function updateFromApplication(Request $request, $id)
         'salary' => 'nullable|numeric',
         'email' => 'required|email|unique:users,email,' . $request->user_id, // Use user_id from request
         'password' => 'nullable|min:8', // Password is optional on update
+        'other_department' => 'required_if:department,' . StaffDepartments::OTHER . '|nullable|string|max:255',
     ]);
 
     // Find existing staff profile
     $staff = StaffProfile::with('user')->findOrFail($id);
     
-    // Handle "other" department
-    $department = $request->department;
-    if ($request->department === 'other' && $request->filled('other_department')) {
-        $department = $request->other_department;
-    }
+    $department = $this->departments->resolve($request->department, $request->other_department);
     
     $application = EmploymentApplication::findOrFail(
         $request->employment_application_id
@@ -339,7 +337,7 @@ private function deleteOldDocument($staff, $documentType)
             ->where('employment_application_id', $id)
             ->first();
     
-        $departments = ['HR', 'IT', 'Finance', 'Marketing', 'Operations', 'Sales', 'Admin'];
+        $departments = $this->departments->options();
     
         $supervisors = StaffProfile::with('user')
             ->where('status', 'active')
@@ -359,7 +357,7 @@ private function deleteOldDocument($staff, $documentType)
     public function edit($id)
     {
         $staff = StaffProfile::findOrFail($id);
-        $departments = ['HR', 'IT', 'Finance', 'Operations', 'Marketing', 'Sales'];
+        $departments = $this->departments->options();
         
         return view('staff.edit', compact('staff', 'departments'));
     }
@@ -369,10 +367,11 @@ private function deleteOldDocument($staff, $documentType)
     {
         $staff = StaffProfile::findOrFail($id);
         
-        $request->validate([
+        $data = $request->validate([
             'department' => 'required|string',
+            'other_department' => 'required_if:department,' . StaffDepartments::OTHER . '|nullable|string|max:255',
             'designation' => 'required|string',
-            'employment_type' => 'required|in:full_time,part_time,contract',
+            'employment_type' => 'required|in:full_time,part_time,contract,probation',
             'salary' => 'nullable|numeric',
             'bank_name' => 'nullable|string',
             'account_number' => 'nullable|string',
@@ -380,40 +379,31 @@ private function deleteOldDocument($staff, $documentType)
             'status' => 'required|in:active,suspended,terminated,on_leave',
         ]);
 
-        $staff->update($request->all());
+        $data['department'] = $this->departments->resolve($data['department'], $data['other_department'] ?? null);
 
-        return redirect()->route('staff.show', $id)->with('success', 'Staff profile updated!');
+        // Only validated fields are saved, so extra posted fields can never overwrite other columns
+        $staff->update(collect($data)->except('other_department')->all());
+
+        return redirect()->route('admin.staff.show', $id)->with('success', 'Staff profile updated!');
     }
     
    
     
-    protected function sendWelcomeEmail($email, $plainPassword, $staff)
-{
-    try {
-        // Compute full name from related user
-        $fullName = $staff->user->first_name . ' ' . $staff->user->last_name;
+    // Emails the new login details, a mail failure still counts as a created account with a clear warning
+    private function redirectAfterCreate(User $user, string $plainPassword)
+    {
+        try {
+            $this->credentials->sendLoginDetails($user, $plainPassword);
+        } catch (Throwable $e) {
+            report($e);
 
-        Mail::send('emails.staff-welcome', [
-            'user'     => $email,
-            'password' => $plainPassword,
-            'staff'    => $staff,
-            'full_name'=> $fullName, // pass to Blade
-        ], function ($message) use ($email) {
-            $message->to($email)
-                    ->subject('Welcome to the Team 🎉');
-        });
+            return redirect()->route('admin.staff.index')
+                ->with('warning', 'Staff member added, but the login email could not be sent. Open the profile and use Regenerate Password to resend it.');
+        }
 
-        return true;
-
-    } catch (\Throwable $e) {
-        // Show error immediately
-        throw $e;
+        return redirect()->route('admin.staff.index')
+            ->with('success', 'Staff member added successfully! Login details sent to ' . $user->email);
     }
-}
-
-    
-
-
 }
 
 

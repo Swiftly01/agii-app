@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 use App\Http\Controllers\StaffController;
+use App\Http\Controllers\StaffCredentialController;
 use App\Http\Controllers\StaffDashboardController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\StaffAttendanceController;
@@ -106,6 +107,7 @@ Route::middleware(['auth', 'admin'])
     Route::get('/{id}', [StaffController::class, 'show'])->name('show');
     Route::get('/{id}/edit', [StaffController::class, 'edit'])->name('edit');
     Route::put('/{id}', [StaffController::class, 'update'])->name('update');
+    Route::post('/{id}/regenerate-password', [StaffCredentialController::class, 'regenerate'])->name('regenerate-password');
     
 });
 

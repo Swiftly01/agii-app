@@ -10,6 +10,8 @@ class VendorSubscription extends Model
 {
     use HasFactory;
 
+    public const STATUS_ACTIVE = 'active';
+
 
     protected $fillable = [
         'user_id',

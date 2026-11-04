@@ -2,6 +2,7 @@
 
 @section('content')
 <div class="container-fluid">
+    @include('staff.partials.flash')
     <div class="row mb-4">
         <div class="col-md-6">
             <h1>Staff Profile</h1>
@@ -27,6 +28,9 @@
                     <span class="badge bg-{{ $staff->status == 'active' ? 'success' : 'warning' }} mb-3">
                         {{ ucfirst($staff->status) }}
                     </span>
+                    <div class="d-grid">
+                        @include('staff.partials.regenerate-password')
+                    </div>
                 </div>
             </div>
 

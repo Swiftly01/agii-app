@@ -5,6 +5,7 @@
 
 @section('content')
 <div class="container-fluid">
+    @include('staff.partials.flash')
     <div class="row mb-4">
         <div class="col-md-12">
             <nav aria-label="breadcrumb">
@@ -44,11 +45,15 @@
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Department</label>
-                                <select name="department" class="form-select" required>
+                                <select name="department" id="department" class="form-select" required>
                                     @foreach ($departments as $dept)
                                         <option value="{{ $dept }}" {{ old('department', $staff->department) == $dept ? 'selected' : '' }}>{{ $dept }}</option>
                                     @endforeach
+                                    <option value="other" {{ old('department') === 'other' ? 'selected' : '' }}>Other (Specify)</option>
                                 </select>
+                                <input type="text" name="other_department" id="other_department"
+                                    class="form-control mt-2 {{ old('department') === 'other' ? '' : 'd-none' }}"
+                                    value="{{ old('other_department') }}" placeholder="Please specify the category">
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Designation</label>
@@ -58,7 +63,7 @@
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Employment Type</label>
                                 <select name="employment_type" class="form-select" required>
-                                    @foreach (['full_time' => 'Full Time', 'part_time' => 'Part Time', 'contract' => 'Contract'] as $val => $label)
+                                    @foreach (['full_time' => 'Full Time', 'part_time' => 'Part Time', 'contract' => 'Contract', 'probation' => 'Probation'] as $val => $label)
                                         <option value="{{ $val }}" {{ old('employment_type', $staff->employment_type) == $val ? 'selected' : '' }}>{{ $label }}</option>
                                     @endforeach
                                 </select>
@@ -106,7 +111,29 @@
                     </form>
                 </div>
             </div>
+
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-lock"></i> Login Access</h5>
+                </div>
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <p class="mb-0 text-muted">Generates a new password and emails it to {{ $staff->user->email }}.</p>
+                    @include('staff.partials.regenerate-password')
+                </div>
+            </div>
         </div>
     </div>
+
+@push('scripts')
+<script>
+    // Shows the free text field only while Other is selected
+    document.getElementById('department').addEventListener('change', function () {
+        const other = document.getElementById('other_department');
+        const isOther = this.value === 'other';
+        other.classList.toggle('d-none', !isOther);
+        other.required = isOther;
+    });
+</script>
+@endpush
 </div>
 @endsection

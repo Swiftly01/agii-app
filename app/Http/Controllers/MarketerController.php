@@ -18,13 +18,18 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 use App\Services\PaystackService;
+use App\Services\Marketer\ProductPostingPolicy;
+use App\Services\Marketer\ReferralCommissionService;
 
 class MarketerController extends Controller
 {
     protected $paystackService;
 
-    public function __construct(PaystackService $paystackService)
-    {
+    public function __construct(
+        PaystackService $paystackService,
+        private readonly ReferralCommissionService $commissions,
+        private readonly ProductPostingPolicy $postingPolicy,
+    ) {
         $this->paystackService = $paystackService;
     }
 
@@ -71,8 +76,8 @@ class MarketerController extends Controller
         // Calculate pricing
         $pricing = $plan->getPriceWithVat($billingCycle, $months);
         
-        // Add commission calculation for display
-        $commission = $pricing['total'] * 0.1;
+        // Commission is shown on the amount before VAT, matching what is credited on activation
+        $commission = $this->commissions->previewFor($pricing['subtotal']);
 
         return view('marketer.vendors.checkout', compact(
             'vendor', 
@@ -245,7 +250,6 @@ class MarketerController extends Controller
             }
 
             $vendor = $subscription->user;
-            $marketer = Auth::user()->marketer ?? Marketer::find($subscription->referred_by);
 
             // Verify transaction amount matches subscription amount
             $expectedAmount = round($subscription->amount * 100); // Convert to kobo
@@ -283,27 +287,7 @@ class MarketerController extends Controller
                     'expires_at' => $this->calculateExpiryDate($subscription->billing_cycle, $subscription->months),
                 ]);
 
-                // Calculate marketer commission (10% of subscription amount)
-                $commissionRate = $marketer->commission_rate ?? 10;
-                $commission = $subscription->amount * ($commissionRate / 100);
-
-                // Update marketer earnings
-                $marketer->update([
-                    'pending_earnings' => ($marketer->pending_earnings ?? 0) + $commission,
-                    'total_earnings' => ($marketer->total_earnings ?? 0) + $commission
-                ]);
-
-                // Log commission transaction
-                CommissionTransaction::create([
-                    'marketer_id' => $marketer->id,
-                    'vendor_id' => $vendor->id,
-                    'subscription_id' => $subscription->id,
-                    'amount' => $subscription->amount,
-                    'commission_rate' => $commissionRate,
-                    'commission_amount' => $commission,
-                    'status' => 'pending',
-                    'payment_reference' => $reference,
-                ]);
+                // Commission is credited by the VendorSubscriptionActivated listener once this commits
 
                 DB::commit();
 
@@ -311,7 +295,7 @@ class MarketerController extends Controller
                 // $this->sendPaymentSuccessNotification($vendor, $subscription, $marketer);
 
                 return redirect()->route('marketer.vendors.show', $vendor->id)
-                    ->with('success', 'Payment successful! Vendor account is now active. You earned ₦' . number_format($commission, 2) . ' commission.');
+                    ->with('success', 'Payment successful! Vendor account is now active. You earned ₦' . number_format($this->commissions->previewFor((float) ($subscription->subtotal ?? $subscription->amount)), 2) . ' commission.');
                     
             } else {
                 // Payment failed
@@ -497,11 +481,11 @@ class MarketerController extends Controller
                 'email_verified_at' => now(), // Auto-verify since marketer is adding
                 'terms_accepted' => true,
             ]);
-            // dd();
-            return redirect()->route('marketer.vendors.payment', $vendor->id)
-                ->with('success', 'Vendor created successfully! Please complete payment setup.');
+
+            // Payment is optional for now, so the marketer lands on the vendor page and can start posting
+            return redirect()->route('marketer.vendors.show', $vendor->id)
+                ->with('success', 'Vendor created successfully! You can start adding products now.');
         } catch (\Exception $e) {
-            dd($e->getMessage());
             return redirect()->back()
                 ->withInput()
                 ->with('error', 'Failed to create vendor: ' . $e->getMessage());
@@ -538,6 +522,11 @@ class MarketerController extends Controller
             abort(403);
         }
 
+        if (! $this->postingPolicy->canPostFor($vendor)) {
+            return redirect()->route('marketer.vendors.show', $vendor->id)
+                ->with('error', $this->postingPolicy->deniedMessage());
+        }
+
         $categories = \App\Models\Category::all();
 
         return view('marketer.products.create', compact('vendor', 'categories'));
@@ -571,6 +560,13 @@ class MarketerController extends Controller
                 return response()->json([
                     'success' => false,
                     'message' => 'Unauthorized action'
+                ], 403);
+            }
+
+            if (! $this->postingPolicy->canPostFor($vendor)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $this->postingPolicy->deniedMessage()
                 ], 403);
             }
 
