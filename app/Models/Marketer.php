@@ -172,6 +172,15 @@ class Marketer extends Model
         return $this->is_active && $this->pending_earnings > 0;
     }
 
+    // Adds a commission to both the withdrawable balance and the lifetime total in one atomic query
+    public function creditEarnings(float $amount): void
+    {
+        $this->incrementEach([
+            'pending_earnings' => $amount,
+            'total_earnings' => $amount,
+        ]);
+    }
+
     /**
      * Get available withdrawal amount.
      */

@@ -496,6 +496,7 @@
                                 <i class="fas fa-exclamation-triangle fa-lg"></i>
                             </div>
                             <p class="stats-label">No active subscription</p>
+                            <p class="text-muted small mb-0">You can post products for this vendor now. You earn {{ rtrim(rtrim(number_format(config('marketer.commission_rate'), 2), '0'), '.') }}% commission once they subscribe.</p>
                             <a href="{{ route('marketer.vendors.payment', $vendor->id) }}"
                                 class="btn btn-primary-modern btn-modern mt-2">
                                 <i class="fas fa-credit-card me-1"></i> Setup Payment

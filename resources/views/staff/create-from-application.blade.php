@@ -322,14 +322,13 @@
                             <!-- Password -->
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="password" class="form-label">Temporary Password *</label>
+                                    <label for="password" class="form-label">Temporary Password</label>
                                     <div class="input-group">
                                         <input type="password" 
                                                class="form-control @error('password') is-invalid @enderror" 
                                                id="password" 
                                                name="password" 
-                                               value="{{ old('password') }}" 
-                                               required>
+                                               value="{{ old('password') }}">
                                         <button class="btn btn-outline-secondary" type="button" id="generatePassword">
                                             <i class="fas fa-sync-alt"></i> Generate
                                         </button>
@@ -340,20 +339,19 @@
                                     @error('password')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
-                                    <small class="form-text text-muted">Min 8 characters. User should change on first login.</small>
+                                    <small class="form-text text-muted">Min 8 characters. Leave blank and a password is generated and emailed.</small>
                                 </div>
                             </div>
                             
                             <!-- Confirm Password -->
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="password_confirmation" class="form-label">Confirm Password *</label>
+                                    <label for="password_confirmation" class="form-label">Confirm Password</label>
                                     <div class="input-group">
                                         <input type="password" 
                                                class="form-control" 
                                                id="password_confirmation" 
-                                               name="password_confirmation" 
-                                               required>
+                                               name="password_confirmation">
                                         <button class="btn btn-outline-secondary" type="button" id="togglePasswordConfirm">
                                             <i class="fas fa-eye"></i>
                                         </button>
@@ -506,7 +504,7 @@
                                 <li>Creating this staff profile will generate login credentials for the new employee</li>
                                 <li>An email notification will be sent to the provided email address</li>
                                 <li>The employment application status will be automatically updated to "Hired"</li>
-                                <li>Staff will be required to change their password on first login</li>
+                                <li>Staff should change their temporary password after their first login</li>
                                 <li>Ensure all information is accurate before proceeding</li>
                             </ul>
                         </div>

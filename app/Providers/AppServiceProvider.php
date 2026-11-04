@@ -4,7 +4,9 @@ namespace App\Providers;
 
 use App\Contracts\SmsGateway;
 use App\Models\Product;
+use App\Models\VendorSubscription;
 use App\Observers\ProductObserver;
+use App\Observers\VendorSubscriptionObserver;
 use App\Services\Analytics\AdminAnalyticsService;
 use App\Services\Analytics\Metrics;
 use App\Services\Sms\SmsManager;
@@ -34,6 +36,8 @@ class AppServiceProvider extends ServiceProvider
         Paginator::useBootstrapFive();
 
         Product::observe(ProductObserver::class);
+
+        VendorSubscription::observe(VendorSubscriptionObserver::class);
 
         Event::subscribe(\App\Listeners\AnalyticsEventSubscriber::class);
     }

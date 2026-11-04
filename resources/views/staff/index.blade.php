@@ -5,6 +5,7 @@
 
 @section('content')
 <div class="container-fluid">
+    @include('staff.partials.flash')
     <div class="row mb-4">
         <div class="col-md-6">
             <h1>Staff Management</h1>
