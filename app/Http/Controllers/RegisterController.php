@@ -32,7 +32,7 @@ class RegisterController extends Controller
 
         $user = $this->create($request->all());
 
-        
+
 
         // Fire the Registered event (this will trigger email verification)
         event(new Registered($user));
@@ -51,7 +51,7 @@ class RegisterController extends Controller
             'first_name' => ['required', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
-            'phone' => ['required', 'string', 'max:20'],
+            'phone' => ['required', 'string', 'max:20', 'unique:users,phone'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
             'user_type' => ['required'],
             'state' => ['required', 'string', 'max:255'],
@@ -64,6 +64,8 @@ class RegisterController extends Controller
         if ($data['user_type'] === 'vendor') {
             $rules['business_type'] = ['required', 'string'];
         }
+
+        $messages = ['phone.unique' => 'This phone number is already registered. Try logging in instead.'];
 
         return Validator::make($data, $rules);
     }
@@ -110,7 +112,7 @@ class RegisterController extends Controller
             $userData['interests'] = !empty($data['interests']) ? json_encode($data['interests']) : null;
         }
 
-        
+
 
         return User::create($userData);
     }
