@@ -1,6 +1,6 @@
 @php
     $shareUrl = url()->current();
-    $shareText = $product->title . ' - ₦' . number_format($product->price);
+    $shareText = $product->isService() ? $product->title : $product->title . ' - ₦' . number_format($product->price);
 @endphp
 
 <div class="modal fade" id="shareModal" tabindex="-1" aria-labelledby="shareModalLabel" aria-hidden="true">

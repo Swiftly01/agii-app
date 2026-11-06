@@ -238,7 +238,10 @@
                                         <span class="ms-2 small text-muted">({{ $product->review_count }})</span>
                                     </div>
 
-                                    <div class="price-section ">
+                                    @if ($product->isService())
+<x-seller-contact :product="$product" />
+@else
+<div class="price-section ">
                                         <div class="current-price fw-bold text-dark">
                                             ₦{{ number_format($product->price) }}
                                         </div>
@@ -248,6 +251,7 @@
                                         </div>
                                         @endif
                                     </div>
+@endif
 
                                     <div class="service-meta d-flex justify-content-between align-items-center mb-3">
                                         <div class="location small text-muted">
@@ -456,26 +460,12 @@
                                         <span class="ms-2 small text-muted">({{ $service->review_count }})</span>
                                     </div>
 
-                                    <div class="price-section ">
-                                        <div class="current-price fw-bold text-dark">
-                                            ₦{{ number_format($service->price) }}
-                                        </div>
-                                        @if($service->original_price > $service->price)
-                                        <div class="original-price text-muted text-decoration-line-through small">
-                                            ₦{{ number_format($service->original_price) }}
-                                        </div>
-                                        @endif
-                                    </div>
+                                    <x-seller-contact :product="$service" class="mb-2" />
 
                                     <div class="service-meta d-flex justify-content-between align-items-center mb-3">
                                         <div class="location small text-muted">
                                             <i class="bi bi-geo-alt me-1"></i> {{ Str::limit($service->location, 15) }}
                                         </div>
-                                        @if($service->negotiable)
-                                        <span class="negotiable-badge bg-success bg-opacity-10 text-success small px-2 py-1 rounded">
-                                            Negotiable
-                                        </span>
-                                        @endif
                                     </div>
                                     
                                     <a href="{{ route('product.show', $service->slug) }}" class="btn btn-success btn-sm w-100">
@@ -848,7 +838,10 @@
                                                 </span>
                                             </div>
 
-                                            <div class="price-section ">
+                                            @if ($product->isService())
+<x-seller-contact :product="$product" />
+@else
+<div class="price-section ">
                                                 <div class="current-price fw-bold text-dark fs-5">
                                                     ₦{{ number_format($product->price) }}
                                                 </div>
@@ -858,6 +851,7 @@
                                                 </div>
                                                 @endif
                                             </div>
+@endif
 
                                             <div class="product-meta d-flex justify-content-between align-items-center">
                                                 <div class="location small text-muted">

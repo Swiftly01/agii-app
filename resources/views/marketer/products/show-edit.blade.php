@@ -117,7 +117,7 @@
                                                     <select class="form-select edit-mode" name="category_id"
                                                         style="display: none;">
                                                         @foreach ($categories as $category)
-                                                            <option value="{{ $category->id }}"
+                                                            <option value="{{ $category->id }}" data-type="{{ $category->type }}"
                                                                 {{ $product->category_id == $category->id ? 'selected' : '' }}>
                                                                 {{ $category->name }}
                                                             </option>
@@ -127,7 +127,7 @@
                                             </div>
                                         </div>
 
-                                        <div class="row">
+                                        <div class="row" data-price-field>
                                             <div class="col-md-6">
                                                 <div class="mb-3">
                                                     <label class="form-label fw-semibold">Price (₦)</label>
@@ -352,6 +352,8 @@
 @endpush
 
 @push('scripts')
+@include('products.partials.price-fields-script', ['service' => $product->isService()])
+
     <script>
         let isEditMode = false;
         let removedImageIndexes = [];

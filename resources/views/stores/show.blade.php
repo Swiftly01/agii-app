@@ -162,12 +162,16 @@
                                 </div>
 
                                 <!-- Price -->
-                                <div class="product-price">
+                                @if ($product->isService())
+<x-seller-contact :product="$product" />
+@else
+<div class="product-price">
                                     <span class="current-price">₦{{ number_format($product->price) }}</span>
                                     @if ($product->old_price && $product->old_price > $product->price)
                                         <span class="original-price">₦{{ number_format($product->old_price) }}</span>
                                     @endif
                                 </div>
+@endif
 
                                 <!-- Meta Information -->
                                 <div class="product-meta">

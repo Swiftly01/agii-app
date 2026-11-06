@@ -48,7 +48,7 @@
                             <div class="row g-4" id="categoryOptions">
                                 @foreach ($categories as $category)
                                     <div class="col-md-4 col-sm-6">
-                                        <div class="category-card" data-category="{{ $category->id }}">
+                                        <div class="category-card" data-category="{{ $category->id }}" data-type="{{ $category->type }}">
                                             <div class="category-icon">
                                                 <i class="bi bi-{{ $category->icon ?? 'box' }}"></i>
                                             </div>
@@ -96,7 +96,7 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="col-md-4" data-price-field>
                                         <div class="mb-3">
                                             <label for="productPrice" class="form-label fw-semibold required-field">Price
                                                 (₦)</label>
@@ -108,7 +108,7 @@
                                 </div>
 
                                 <div class="row">
-                                    <div class="col-md-6">
+                                    <div class="col-md-6" data-price-field>
                                         <div class="mb-3">
                                             <label for="oldPrice" class="form-label fw-semibold">Old Price (₦)</label>
                                             <input type="number" class="form-control" id="oldPrice" name="old_price"
@@ -164,7 +164,7 @@
                                     </div>
                                 </div>
 
-                                <div class="mb-3">
+                                <div class="mb-3" data-price-field>
                                     <div class="form-check">
                                         <input class="form-check-input" type="checkbox" id="negotiable"
                                             name="negotiable" value="1">
@@ -218,8 +218,8 @@
                             <div class="category-preview">
                                 <h5 id="reviewCategory">Category: Electronics > Phones</h5>
                                 <h3 id="reviewTitle" class="mt-2">iPhone 13 Pro Max 256GB</h3>
-                                <h4 class="text-primary mt-2" id="reviewPrice">₦450,000</h4>
-                                <div id="reviewOldPrice" class="text-muted"></div>
+                                <h4 class="text-primary mt-2" id="reviewPrice" data-price-field>₦450,000</h4>
+                                <div id="reviewOldPrice" data-price-field class="text-muted"></div>
                             </div>
 
                             <div class="row mt-4">
@@ -788,6 +788,8 @@
 @endpush
 
 @push('scripts')
+@include('products.partials.price-fields-script')
+
     <script>
         // JavaScript functionality
         let selectedCategory = null;
@@ -898,6 +900,7 @@
                 this.classList.add('selected');
 
                 selectedCategory = this.dataset.category;
+                PriceFields.sync(this.dataset.type === 'service');
                 document.getElementById('nextToStep2').disabled = false;
 
                 // Load subcategories
@@ -1159,8 +1162,10 @@
             formData.append('_token', document.querySelector('input[name="_token"]').value);
             formData.append('category_id', selectedCategory);
             formData.append('title', document.getElementById('productTitle').value);
-            formData.append('price', document.getElementById('productPrice').value);
-            formData.append('old_price', document.getElementById('oldPrice').value);
+            if (!PriceFields.hidden) {
+                formData.append('price', document.getElementById('productPrice').value);
+                formData.append('old_price', document.getElementById('oldPrice').value);
+            }
             formData.append('description', document.getElementById('productDescription').value);
             formData.append('condition', document.getElementById('productCondition').value);
             formData.append('location', document.getElementById('productLocation').value);

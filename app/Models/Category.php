@@ -57,6 +57,11 @@ class Category extends Model
         return $query->whereNull('parent_id');
     }
 
+    public function isService(): bool
+    {
+        return $this->type === 'service';
+    }
+
     // Methods
     public function getSubcategoriesAttribute()
     {

@@ -103,7 +103,11 @@
                                             <span class="text-muted">({{ $product->review_count }})</span>
                                         </div>
 
-                                        <span class="price">₦{{ number_format($product->price) }}</span>
+                                        @if ($product->isService())
+<x-seller-contact :product="$product" />
+@else
+<span class="price">₦{{ number_format($product->price) }}</span>
+@endif
 
                                         <div class="d-flex align-items-center justify-content-between mt-2">
                                             <span class="location text-muted small">
