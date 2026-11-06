@@ -52,12 +52,13 @@ class Marketer extends Model
         return $this->belongsTo(User::class);
     }
 
+    // users.referred_by stores the marketer's user id, so referrals join on user_id and not on the code
     /**
      * Get the vendors referred by this marketer.
      */
     public function referredVendors(): HasMany
     {
-        return $this->hasMany(User::class, 'referred_by', 'referral_code')
+        return $this->hasMany(User::class, 'referred_by', 'user_id')
             ->where('user_type', 'vendor');
     }
 
@@ -66,7 +67,7 @@ class Marketer extends Model
      */
     public function referredUsers(): HasMany
     {
-        return $this->hasMany(User::class, 'referred_by', 'referral_code');
+        return $this->hasMany(User::class, 'referred_by', 'user_id');
     }
 
     /**
