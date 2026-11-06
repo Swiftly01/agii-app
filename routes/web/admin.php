@@ -6,6 +6,7 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AdminAnalyticsController;
 use App\Http\Controllers\AdminCategoryController;
 use App\Http\Controllers\AdminVendorController;
+use App\Http\Controllers\AdminMarketerController;
 use App\Http\Controllers\AdminCustomerController;
 use App\Http\Controllers\ProductController;
 
@@ -25,6 +26,10 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::delete('/vendors/{id}', [AdminVendorController::class, 'destroy'])->name('admin.vendors.destroy');
     Route::post('/vendors/{id}/approve', [AdminVendorController::class, 'approve'])->name('admin.vendors.approve');
     Route::post('/vendors/{id}/reject', [AdminVendorController::class, 'reject'])->name('admin.vendors.reject');
+
+    // Marketers Management
+    Route::get('/marketers', [AdminMarketerController::class, 'index'])->name('admin.marketers.index');
+    Route::get('/marketers/{marketer}', [AdminMarketerController::class, 'show'])->name('admin.marketers.show');
 
     // Products Management
     Route::get('/products', [AdminController::class, 'productsForApproval'])->name('admin.products.index');

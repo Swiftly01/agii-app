@@ -53,7 +53,12 @@
             <span class="menu-text">Vendor</span>
         </a>
 
-        <a href="{{ route('admin.employment.index') }}" class="menu-item">
+        <a href="{{ route('admin.marketers.index') }}" class="menu-item {{ request()->routeIs('admin.marketers.*') ? 'active' : '' }}">
+                <i class="fas fa-bullhorn menu-icon"></i>
+                <span class="menu-text">Marketers</span>
+            </a>
+
+            <a href="{{ route('admin.employment.index') }}" class="menu-item">
             <i class="fas fa-user menu-icon"></i>
             <span class="menu-text">HR</span>
         </a>
