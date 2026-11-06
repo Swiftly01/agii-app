@@ -69,7 +69,10 @@
                     <span class="text-muted">({{ $product->review_count }} reviews)</span>
                 </div>
 
-                <div class="price-section mb-4">
+                @if ($product->isService())
+<x-seller-contact :product="$product" />
+@else
+<div class="price-section mb-4">
                     <h2 class="text-success">₦{{ number_format($product->price) }}</h2>
                     @if ($product->old_price)
                         <del class="text-muted h5">₦{{ number_format($product->old_price) }}</del>
@@ -79,6 +82,7 @@
                         <span class="badge bg-danger ms-2">-{{ number_format($discount, 0) }}%</span>
                     @endif
                 </div>
+@endif
 
                 <!-- Product Meta -->
                 <div class="product-meta mb-4">
@@ -369,7 +373,10 @@
                                             {{ ucfirst(str_replace('_', ' ', $related->condition)) }} •
                                             {{ $related->location }}
                                         </p>
-                                        <div class="d-flex justify-content-between align-items-center">
+                                        @if ($related->isService())
+<x-seller-contact :product="$related" />
+@else
+<div class="d-flex justify-content-between align-items-center">
                                             <span
                                                 class="fw-bold text-primary">₦{{ number_format($related->price) }}</span>
                                             @if ($related->old_price)
@@ -377,6 +384,7 @@
                                                     class="text-muted small">₦{{ number_format($related->old_price) }}</del>
                                             @endif
                                         </div>
+@endif
                                     </div>
                                     <div class="card-footer bg-transparent border-top-0">
                                         <a href="{{ route('product.show', $related->slug) }}"

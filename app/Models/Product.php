@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Support\SellerContact;
 use Illuminate\Support\Str;
 
 class Product extends Model
@@ -158,6 +159,17 @@ class Product extends Model
         $this->rating = round($this->reviews()->avg('rating') ?? 0, 1);
         $this->review_count = $this->reviews()->count();
         $this->saveQuietly();
+    }
+
+    // Services show seller contact buttons instead of a price
+    public function isService(): bool
+    {
+        return (bool) $this->category?->isService();
+    }
+
+    public function sellerContact(): SellerContact
+    {
+        return SellerContact::for($this->user);
     }
 
     public function isBoosted(): bool

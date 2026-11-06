@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\Products\ListingPricing;
 use App\Models\Category;
 use App\Models\CommissionTransaction;
 use App\Models\User;
@@ -540,8 +541,7 @@ class MarketerController extends Controller
                 'title' => 'required|string|max:255',
                 'category_id' => 'required|exists:categories,id',
                 'description' => 'required|string',
-                'price' => 'required|numeric|min:0',
-                'old_price' => 'nullable|numeric|min:0',
+                ...ListingPricing::rules($request->category_id),
                 'condition' => 'required|in:new,used_like_new,used_good,used_fair',
                 'location' => 'required|string|max:255',
                 'quantity' => 'required|integer|min:1',
@@ -606,14 +606,12 @@ class MarketerController extends Controller
                 'title' => $request->title,
                 'slug' => $slug,
                 'description' => $request->description,
-                'price' => $request->price,
-                'old_price' => $request->old_price,
+                ...ListingPricing::attributes($request),
                 'condition' => $request->condition,
                 'location' => $request->location,
                 'quantity' => $request->quantity,
                 'images' => $imagePaths,
                 'specifications' => $specifications,
-                'negotiable' => $request->boolean('negotiable'),
                 'tags' => $request->tags ?? [],
                 'status' => 'active',
                 'meta_title' => $request->title,
@@ -721,8 +719,7 @@ private function generateUniqueSlug($title)
                 'title' => 'required|string|max:255',
                 'category_id' => 'required|exists:categories,id',
                 'description' => 'required|string',
-                'price' => 'required|numeric|min:0',
-                'old_price' => 'nullable|numeric|min:0',
+                ...ListingPricing::rules($request->category_id),
                 'condition' => 'required|in:new,used_like_new,used_good,used_fair',
                 'location' => 'required|string|max:255',
                 'quantity' => 'required|integer|min:1',
@@ -780,14 +777,12 @@ private function generateUniqueSlug($title)
                 'category_id' => $request->category_id,
                 'title' => $request->title,
                 'description' => $request->description,
-                'price' => $request->price,
-                'old_price' => $request->old_price,
+                ...ListingPricing::attributes($request),
                 'condition' => $request->condition,
                 'location' => $request->location,
                 'quantity' => $request->quantity,
                 'images' => $allImages,
                 'specifications' => $specifications,
-                'negotiable' => $request->boolean('negotiable'),
                 'meta_title' => $request->title,
                 'meta_description' => Str::limit($request->description, 160),
             ]);

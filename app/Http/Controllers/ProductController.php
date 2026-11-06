@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\AnalyticsEventType;
 use App\Models\Product;
+use App\Services\Products\ListingPricing;
 use App\Services\Analytics\AnalyticsRecorder;
 use App\Models\Category;
 use App\Models\Location;
@@ -81,15 +82,6 @@ class ProductController extends Controller
                 }
             }
 
-            // 🔹 PRICE FILTER
-            if ($request->filled('min_price') && is_numeric($request->min_price)) {
-                $servicesQuery->where('price', '>=', (float) $request->min_price);
-            }
-
-            if ($request->filled('max_price') && is_numeric($request->max_price)) {
-                $servicesQuery->where('price', '<=', (float) $request->max_price);
-            }
-
             // 🔹 CONDITION FILTER (for services)
             if ($request->filled('condition') && $request->condition !== '') {
                 $servicesQuery->where('condition', $request->condition);
@@ -158,12 +150,6 @@ class ProductController extends Controller
             // 🔹 SORTING
             $sort = $request->get('sort', 'latest');
             switch ($sort) {
-                case 'price_low':
-                    $servicesQuery->orderBy('price', 'asc');
-                    break;
-                case 'price_high':
-                    $servicesQuery->orderBy('price', 'desc');
-                    break;
                 case 'rating':
                     $servicesQuery->orderBy('rating', 'desc');
                     break;
@@ -999,8 +985,7 @@ class ProductController extends Controller
             'title' => 'required|string|max:255',
             'category_id' => 'required|exists:categories,id',
             'description' => 'required|string',
-            'price' => 'required|numeric|min:0',
-            'old_price' => 'nullable|numeric|min:0',
+            ...ListingPricing::rules($request->category_id),
             'condition' => 'required|in:new,used_like_new,used_good,used_fair',
             'location' => 'required|string|max:255',
             'quantity' => 'required|integer|min:1',
@@ -1054,14 +1039,12 @@ class ProductController extends Controller
                 'title' => $request->title,
                 'slug' => $slug,
                 'description' => $request->description,
-                'price' => $request->price,
-                'old_price' => $request->old_price,
+                ...ListingPricing::attributes($request),
                 'condition' => $request->condition,
                 'location' => $request->location,
                 'quantity' => $request->quantity,
                 'images' => $imagePaths,
                 'specifications' => $specifications,
-                'negotiable' => $request->boolean('negotiable'),
                 'tags' => $request->tags ?? [],
                 // New listings always start pending — they go live only
                 // once an admin approves them (see ProductApprovalService).
@@ -1158,8 +1141,7 @@ class ProductController extends Controller
             'title' => 'required|string|max:255',
             'category_id' => 'required|exists:categories,id',
             'description' => 'required|string',
-            'price' => 'required|numeric|min:0',
-            'old_price' => 'nullable|numeric|min:0',
+            ...ListingPricing::rules($request->category_id),
             'condition' => 'required|in:new,used_like_new,used_good,used_fair',
             'location' => 'required|string|max:255',
             'quantity' => 'required|integer|min:1',
@@ -1224,14 +1206,12 @@ class ProductController extends Controller
                 'title' => $request->title,
                 'slug' => $newSlug,
                 'description' => $request->description,
-                'price' => $request->price,
-                'old_price' => $request->old_price,
+                ...ListingPricing::attributes($request),
                 'condition' => $request->condition,
                 'location' => $request->location,
                 'quantity' => $request->quantity,
                 'images' => $imagePaths,
                 'specifications' => $specifications,
-                'negotiable' => $request->boolean('negotiable'),
                 'meta_title' => $request->title,
                 'meta_description' => Str::limit($request->description, 160),
             ]);

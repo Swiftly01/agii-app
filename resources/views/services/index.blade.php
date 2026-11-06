@@ -103,28 +103,6 @@
                                 </div>
                             </div>
 
-                            <!-- Price Range -->
-                            <div class="filter-group mb-4">
-                                <label class="form-label small fw-bold mb-2">Price Range (₦)</label>
-                                <div class="row g-2 mb-2">
-                                    <div class="col-6">
-                                        <input type="number" 
-                                               name="min_price" 
-                                               class="form-control form-control-sm" 
-                                               placeholder="Min" 
-                                               value="{{ request('min_price') }}"
-                                               min="0">
-                                    </div>
-                                    <div class="col-6">
-                                        <input type="number" 
-                                               name="max_price" 
-                                               class="form-control form-control-sm" 
-                                               placeholder="Max" 
-                                               value="{{ request('max_price') }}"
-                                               min="0">
-                                    </div>
-                                </div>
-                            </div>
 
                             <!-- Location -->
                             <div class="filter-group mb-4 d-none">
@@ -240,8 +218,6 @@
                                 <span class="text-muted small d-none d-md-block">Sort by:</span>
                                 <select class="form-select form-select-sm border-success" id="sortSelect" style="width: auto;">
                                     <option value="latest" {{ request('sort') == 'latest' ? 'selected' : '' }}>Latest</option>
-                                    <option value="price_low" {{ request('sort') == 'price_low' ? 'selected' : '' }}>Price: Low to High</option>
-                                    <option value="price_high" {{ request('sort') == 'price_high' ? 'selected' : '' }}>Price: High to Low</option>
                                     <option value="rating" {{ request('sort') == 'rating' ? 'selected' : '' }}>Top Rated</option>
                                     <!--<option value="featured" {{ request('sort') == 'featured' ? 'selected' : '' }}>Featured</option>-->
                                     <option value="popular" {{ request('sort') == 'popular' ? 'selected' : '' }}>Most Popular</option>
@@ -334,24 +310,10 @@
                                                             {{ Str::limit($service->location, 15) }}
                                                         @endif
                                                     </div>
-                                                    @if($service->negotiable)
-                                                        <span class="negotiable-badge bg-success bg-opacity-10 text-success small px-2 py-1 rounded">
-                                                            Negotiable
-                                                        </span>
-                                                    @endif
                                                 </div>
 
                                                 <div class="service-price-action d-flex justify-content-between align-items-center">
-                                                    <div class="price-section">
-                                                        <div class="current-price fw-bold text-dark fs-5">
-                                                            ₦{{ number_format($service->price) }}
-                                                        </div>
-                                                        @if($service->original_price > $service->price)
-                                                            <div class="original-price text-muted text-decoration-line-through small">
-                                                                ₦{{ number_format($service->original_price) }}
-                                                            </div>
-                                                        @endif
-                                                    </div>
+                                                    <x-seller-contact :product="$service" />
                                                     <a href="{{ route('product.show', $service->slug) }}" 
                                                        class="btn btn-success btn-sm">
                                                         <i class="bi bi-calendar-check me-1"></i> Book Now

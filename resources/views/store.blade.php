@@ -297,7 +297,10 @@
                                             </div>
                                         </div>
 
-                                        <div class="product-price mb-3">
+                                        @if ($product->isService())
+<x-seller-contact :product="$product" />
+@else
+<div class="product-price mb-3">
                                             <span
                                                 class="price fw-bold text-success">₦{{ number_format($product->price) }}</span>
                                             @if ($product->old_price)
@@ -306,6 +309,7 @@
                                                 </span>
                                             @endif
                                         </div>
+@endif
 
                                         <div class="product-location">
                                             <small class="text-muted">
@@ -504,7 +508,10 @@
                                             </div>
                                         </div>
 
-                                        <div class="product-price mb-3">
+                                        @if ($product->isService())
+<x-seller-contact :product="$product" />
+@else
+<div class="product-price mb-3">
                                             <span
                                                 class="price fw-bold text-success">₦{{ number_format($product->price) }}</span>
                                             @if ($product->old_price)
@@ -513,6 +520,7 @@
                                                 </span>
                                             @endif
                                         </div>
+@endif
 
                                         <div class="product-location">
                                             <small class="text-muted">
