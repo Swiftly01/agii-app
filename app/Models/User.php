@@ -86,6 +86,12 @@ class User extends Authenticatable implements MustVerifyEmail
         return "{$this->first_name} {$this->last_name}";
     }
 
+    // The users table has no `name` column, but several admin and staff views read $user->name
+    public function getNameAttribute(): string
+    {
+        return trim("{$this->first_name} {$this->last_name}");
+    }
+
     /**
      * True for accounts created via password registration (or that have
      * since set one). False for Google-only accounts, which can't use

@@ -107,6 +107,7 @@ Route::middleware(['auth', 'admin'])
     Route::get('/{id}', [StaffController::class, 'show'])->name('show');
     Route::get('/{id}/edit', [StaffController::class, 'edit'])->name('edit');
     Route::put('/{id}', [StaffController::class, 'update'])->name('update');
+    Route::delete('/{id}', [StaffController::class, 'destroy'])->name('destroy');
     Route::post('/{id}/regenerate-password', [StaffCredentialController::class, 'regenerate'])->name('regenerate-password');
     
 });

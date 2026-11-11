@@ -29,6 +29,7 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
 
     // Marketers Management
     Route::get('/marketers', [AdminMarketerController::class, 'index'])->name('admin.marketers.index');
+    Route::get('/marketers/vendors/export-pdf', [AdminMarketerController::class, 'exportVendorsPdf'])->name('admin.marketers.vendors.export-pdf');
     Route::get('/marketers/{marketer}', [AdminMarketerController::class, 'show'])->name('admin.marketers.show');
 
     // Products Management

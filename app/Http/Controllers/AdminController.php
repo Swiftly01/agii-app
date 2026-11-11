@@ -44,6 +44,7 @@ class AdminController extends Controller
             'totalVendors' => User::where('user_type', 'vendor')->count(),
             'totalCustomers' => User::where('user_type', 'customer')->count(),
             'totalMarketers' => User::where('user_type', 'marketer')->count(),
+            'totalStaff' => StaffProfile::count(),
             'pendingProducts' => Product::where('status', 'pending')->count(),
             'pendingVendors' => User::vendorStatus('pending')->count(),
             // 'totalTransactions' => Transaction::sum('amount'),

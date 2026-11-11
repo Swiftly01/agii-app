@@ -397,8 +397,8 @@
                                             <td>₦{{ number_format($product->price, 2) }}</td>
                                             <td>
                                                 <span
-                                                    class="badge badge-modern {{ $product->status === 'active' ? 'badge-success' : 'badge-secondary' }}">
-                                                    {{ $product->status === 'active' ? 'Active' : 'Inactive' }}
+                                                    class="badge badge-modern {{ $product->status === 'active' ? 'badge-success' : ($product->status === 'pending' ? 'badge-warning' : 'badge-secondary') }}">
+                                                    {{ $product->status === 'active' ? 'Live' : ($product->status === 'pending' ? 'Pending admin approval' : 'Inactive') }}
                                                 </span>
                                             </td>
                                             <td>
@@ -407,26 +407,7 @@
                                                     <i class="fas fa-eye"></i> View/Edit
                                                 </a>
 
-                                                @if ($product->status === 'pending')
-                                                    <button class="btn btn-sm btn-outline-success approve-product"
-                                                        data-product-id="{{ $product->id }}" title="Approve Product">
-                                                        <i class="fas fa-check"></i>
-                                                    </button>
-                                                    <button class="btn btn-sm btn-outline-danger disapprove-product"
-                                                        data-product-id="{{ $product->id }}" title="Disapprove Product">
-                                                        <i class="fas fa-times"></i>
-                                                    </button>
-                                                @elseif($product->status === 'active')
-                                                    <button class="btn btn-sm btn-outline-danger disapprove-product"
-                                                        data-product-id="{{ $product->id }}" title="Disapprove Product">
-                                                        <i class="fas fa-ban"></i>
-                                                    </button>
-                                                @else
-                                                    <button class="btn btn-sm btn-outline-success approve-product"
-                                                        data-product-id="{{ $product->id }}" title="Approve Product">
-                                                        <i class="fas fa-check"></i>
-                                                    </button>
-                                                @endif
+
 
 
 
@@ -549,10 +530,18 @@
                         <button class="btn btn-info-modern btn-modern" onclick="generateReport()">
                             <i class="fas fa-chart-bar fa-fw"></i> Generate Report
                         </button>
-                        <a href="{{ route('marketer.products.create', $vendor->id) }}"
-                            class="btn btn-warning btn-modern">
-                            <i class="fas fa-plus fa-fw"></i> Add Product
-                        </a>
+                        @if ($vendor->isVendorApproved())
+                            <a href="{{ route('marketer.products.create', $vendor->id) }}"
+                                class="btn btn-warning btn-modern">
+                                <i class="fas fa-plus fa-fw"></i> Add Product
+                            </a>
+                        @else
+                            <span class="btn btn-secondary btn-modern disabled"
+                                title="Products can be added once an admin approves this vendor">
+                                <i class="fas fa-hourglass-half fa-fw"></i>
+                                {{ $vendor->isVendorRejected() ? 'Vendor rejected' : 'Awaiting admin approval' }}
+                            </span>
+                        @endif
                     </div>
                 </div>
             </div>

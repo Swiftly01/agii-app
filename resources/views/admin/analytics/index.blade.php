@@ -29,6 +29,7 @@
         @include('admin.analytics.partials.stat-card', ['label' => 'New Users', 'value' => $users['new'], 'icon' => 'fa-user-plus', 'color' => 'success', 'hint' => $period->label()])
         @include('admin.analytics.partials.stat-card', ['label' => 'Sellers', 'value' => $users['sellers'], 'icon' => 'fa-store', 'color' => 'warning'])
         @include('admin.analytics.partials.stat-card', ['label' => 'Buyers', 'value' => $users['buyers'], 'icon' => 'fa-shopping-bag', 'color' => 'info'])
+        @include('admin.analytics.partials.stat-card', ['label' => 'Total Staff', 'value' => $users['staff'] ?? null, 'icon' => 'fa-id-badge', 'color' => 'secondary', 'hint' => 'Manage staff', 'href' => route('admin.staff.index')])
     </div>
 
     <h6 class="text-uppercase text-muted mb-3">Logins</h6>

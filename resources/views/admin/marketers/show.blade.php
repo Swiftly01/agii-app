@@ -16,9 +16,14 @@
                     </span>
                 </div>
             </div>
-            <a href="{{ route('admin.marketers.index') }}" class="btn btn-secondary">
-                <i class="fas fa-arrow-left me-2"></i>Back to Marketers
-            </a>
+            <div class="d-flex gap-2">
+                <a href="{{ route('admin.marketers.vendors.export-pdf', ['marketer' => $marketer->id]) }}" class="btn btn-danger">
+                    <i class="fas fa-file-pdf me-2"></i>Export Vendors PDF
+                </a>
+                <a href="{{ route('admin.marketers.index') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Marketers
+                </a>
+            </div>
         </div>
     </div>
 

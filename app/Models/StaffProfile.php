@@ -28,7 +28,7 @@ class StaffProfile extends Model
         'next_of_review',
         'emergency_contact',
         'status',
-        'notes'
+        'notes',
     ];
 
     protected $casts = [

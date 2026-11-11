@@ -8,7 +8,11 @@
                 <h6 class="text-muted mb-1">{{ $label }}</h6>
                 <h4 class="mb-0">{{ is_null($value) ? 'N/A' : number_format($value) }}</h4>
                 @isset($hint)
-                    <small class="text-muted">{{ $hint }}</small>
+                    @isset($href)
+                        <a href="{{ $href }}" class="small">{{ $hint }} →</a>
+                    @else
+                        <small class="text-muted">{{ $hint }}</small>
+                    @endisset
                 @endisset
             </div>
         </div>

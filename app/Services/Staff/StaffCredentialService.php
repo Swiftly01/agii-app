@@ -6,6 +6,7 @@ use App\Mail\StaffLoginDetails;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
@@ -18,7 +19,7 @@ class StaffCredentialService
 
     // Emails the login details of a new account, a mail failure is for the caller to handle
     public function sendLoginDetails(User $user, string $plainPassword): void
-    {
+    {   Log::info($user->email);
         Mail::to($user->email)->send(new StaffLoginDetails($user, $plainPassword));
     }
 
@@ -26,6 +27,8 @@ class StaffCredentialService
     public function regenerateAndSend(User $user): void
     {
         $plainPassword = $this->generatePassword();
+
+        Log::info($user->email);
 
         DB::transaction(function () use ($user, $plainPassword) {
             $user->forceFill([

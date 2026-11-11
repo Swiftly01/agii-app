@@ -3,6 +3,7 @@
 namespace App\Services\Analytics\Metrics;
 
 use App\Enums\AnalyticsPeriod;
+use App\Models\StaffProfile;
 use App\Models\User;
 use App\Services\Analytics\Contracts\MetricGroup;
 
@@ -24,6 +25,8 @@ class UserMetrics implements MetricGroup
             'buyers' => (int) $byRole->get('customer', 0),
             'marketers' => (int) $byRole->get('marketer', 0),
             'admins' => (int) $byRole->get('admin', 0),
+            // Same source as the Staff Management list, so the two always agree
+            'staff' => StaffProfile::count(),
             'verified' => User::whereNotNull('email_verified_at')->orWhereNotNull('phone_verified_at')->count(),
             'sellerApproval' => User::where('user_type', 'vendor')
                 ->selectRaw('vendor_status, COUNT(*) as total')

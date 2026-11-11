@@ -7,6 +7,7 @@ use App\Models\Marketer;
 use App\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Collection;
 
 class MarketerDirectory
 {
@@ -51,6 +52,30 @@ class MarketerDirectory
         $referrals->getCollection()->each(fn (User $vendor) => $vendor->commission_earned = (float) ($commissions[$vendor->id] ?? 0));
 
         return $referrals;
+    }
+
+    // Every vendor a marketer added (all marketers when none is given), newest first, for the PDF export
+    public function vendorsForExport(?Marketer $marketer = null): Collection
+    {
+        $vendors = User::query()
+            ->where('user_type', 'vendor')
+            ->when(
+                $marketer,
+                fn (Builder $query) => $query->where('referred_by', $marketer->user_id),
+                fn (Builder $query) => $query->whereIn('referred_by', Marketer::select('user_id')),
+            )
+            ->withCount('products')
+            ->with('activeSubscription')
+            ->latest()
+            ->get();
+
+        // Attach the referring marketer to each vendor with a single extra query
+        $marketers = Marketer::with('user:id,first_name,last_name')
+            ->whereIn('user_id', $vendors->pluck('referred_by')->unique())
+            ->get()
+            ->keyBy('user_id');
+
+        return $vendors->each(fn (User $vendor) => $vendor->setAttribute('marketer', $marketers->get($vendor->referred_by)));
     }
 
     // Cancelled commissions never reach the marketer so they stay out of every total
