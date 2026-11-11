@@ -190,10 +190,14 @@
                                                     class="btn btn-sm btn-outline-modern" title="View Vendor">
                                                     <i class="fas fa-eye"></i>
                                                 </a>
+                                                @if ($vendor->isVendorApproved())
                                                 <a href="{{ route('marketer.products.create', $vendor->id) }}"
                                                     class="btn btn-sm btn-outline-modern" title="Add Product">
                                                     <i class="fas fa-plus"></i>
                                                 </a>
+                                                @else
+                                                <span class="badge bg-warning text-dark" title="Awaiting admin approval">Pending approval</span>
+                                                @endif
                                                 @if (!$vendor->activeSubscription)
                                                     <a href="{{ route('marketer.vendors.payment', $vendor->id) }}"
                                                         class="btn btn-sm btn-outline-modern" title="Setup Payment">

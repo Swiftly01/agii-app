@@ -29,8 +29,11 @@
     <div class="card">
         <div class="card-header">
             <div class="row align-items-center">
-                <div class="col-md-6">
+                <div class="col-md-6 d-flex align-items-center gap-3">
                     <h6 class="card-title mb-0">All Marketers</h6>
+                    <a href="{{ route('admin.marketers.vendors.export-pdf') }}" class="btn btn-sm btn-danger">
+                        <i class="fas fa-file-pdf me-1"></i>Export Vendors PDF
+                    </a>
                 </div>
                 <div class="col-md-6">
                     <form method="GET" action="{{ route('admin.marketers.index') }}" class="d-flex justify-content-end">

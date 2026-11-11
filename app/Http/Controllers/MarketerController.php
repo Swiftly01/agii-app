@@ -483,9 +483,9 @@ class MarketerController extends Controller
                 'terms_accepted' => true,
             ]);
 
-            // Payment is optional for now, so the marketer lands on the vendor page and can start posting
+            // The vendor starts as pending, products can be posted once an admin approves the vendor
             return redirect()->route('marketer.vendors.show', $vendor->id)
-                ->with('success', 'Vendor created successfully! You can start adding products now.');
+                ->with('success', 'Vendor created and sent for admin approval. You can add products once they are approved.');
         } catch (\Exception $e) {
             return redirect()->back()
                 ->withInput()
@@ -525,7 +525,7 @@ class MarketerController extends Controller
 
         if (! $this->postingPolicy->canPostFor($vendor)) {
             return redirect()->route('marketer.vendors.show', $vendor->id)
-                ->with('error', $this->postingPolicy->deniedMessage());
+                ->with('error', $this->postingPolicy->deniedMessage($vendor));
         }
 
         $categories = \App\Models\Category::all();
@@ -566,7 +566,7 @@ class MarketerController extends Controller
             if (! $this->postingPolicy->canPostFor($vendor)) {
                 return response()->json([
                     'success' => false,
-                    'message' => $this->postingPolicy->deniedMessage()
+                    'message' => $this->postingPolicy->deniedMessage($vendor)
                 ], 403);
             }
 
@@ -613,14 +613,15 @@ class MarketerController extends Controller
                 'images' => $imagePaths,
                 'specifications' => $specifications,
                 'tags' => $request->tags ?? [],
-                'status' => 'active',
+                // Marketer posted products are reviewed like any other listing and go live only after an admin approves them
+                'status' => 'pending',
                 'meta_title' => $request->title,
                 'meta_description' => Str::limit($request->description, 160),
             ]);
 
             return response()->json([
                 'success' => true,
-                'message' => 'Product added successfully!',
+                'message' => 'Product submitted for review! It will appear on the site once an admin approves it.',
                 'redirect_url' => route('marketer.vendors.show', $vendor->id)
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -787,6 +788,11 @@ private function generateUniqueSlug($title)
                 'meta_description' => Str::limit($request->description, 160),
             ]);
 
+            // A marketer edit on a live listing goes back to admin review, same as when a vendor edits their own listing
+            if (! $user->isAdmin() && $product->status === 'active') {
+                $product->forceFill(['status' => 'pending'])->save();
+            }
+
             return response()->json([
                 'success' => true,
                 'message' => 'Product updated successfully!'
@@ -839,21 +845,12 @@ private function generateUniqueSlug($title)
         return view('marketer.vendors.showvendor', compact('vendors', 'stats'));
     }
     
-     public function approve(Product $product)
+    // Product approval belongs to admins only, marketers cannot approve products of the vendors they referred
+    public function approve(Product $product)
     {
-        // Check if user has permission to approve this product
-        $marketer = Auth::user()->marketer;
-        // if ($product->user->referred_by !== Auth::id()) {
-        //     return response()->json([
-        //         'success' => false,
-        //         'message' => 'Unauthorized action'
-        //     ], 403);
-        // }
+        abort_unless(Auth::user()?->isAdmin(), 403, 'Admin access required.');
 
-        $product->update([
-            'status' => 'active',
-
-        ]);
+        app(\App\Services\ProductApprovalService::class)->approve($product, Auth::user());
 
         return response()->json([
             'success' => true,
@@ -863,24 +860,14 @@ private function generateUniqueSlug($title)
 
     public function disapprove(Product $product)
     {
-        // Check if user has permission to disapprove this product
-        // $marketer = Auth::user()->marketer;
-        // if ($product->user->referred_by !== Auth::id()) {
-        //     return response()->json([
-        //         'success' => false,
-        //         'message' => 'Unauthorized action'
-        //     ], 403);
-        // }
+        abort_unless(Auth::user()?->isAdmin(), 403, 'Admin access required.');
 
-        $product->update([
-            'status' => 'inactive',
-
-        ]);
+        app(\App\Services\ProductApprovalService::class)->reject($product, Auth::user(), 'Disapproved by admin.');
 
         return response()->json([
             'success' => true,
             'message' => 'Product disapproved successfully!'
         ]);
     }
-    
+
 }

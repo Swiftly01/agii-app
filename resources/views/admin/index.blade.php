@@ -157,6 +157,25 @@
                 </div>
             </div>
         </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card stat-card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="stat-icon bg-secondary text-white rounded-circle me-3">
+                            <i class="fas fa-id-badge"></i>
+                        </div>
+                        <div>
+                            <h6 class="text-muted mb-1">Total Staff</h6>
+                            <h4 class="mb-0">{{ number_format($stats['totalStaff']) }}</h4>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <a href="{{ route('admin.staff.index') }}" class="text-secondary small">Manage staff →</a>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Charts and Recent Activities -->

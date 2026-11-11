@@ -49,7 +49,7 @@
                             <td>{{ $member->user->name ?? 'N/A' }}</td>
                             <td>{{ $member->department }}</td>
                             <td>{{ $member->designation }}</td>
-                            <td>{{ $member->date_of_employment->format('M d, Y') }}</td>
+                            <td>{{ $member->date_of_employment?->format('M d, Y') ?? 'N/A' }}</td>
                             <td>
                                 <span class="badge bg-{{ $member->status == 'active' ? 'success' : 'warning' }}">
                                     {{ ucfirst($member->status) }}
@@ -62,9 +62,16 @@
                                 <a href="{{ route('admin.staff.edit', $member->id) }}" class="btn btn-sm btn-primary">
                                     Edit
                                 </a>
+                                <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal"
+                                    data-bs-target="#deleteStaffModal-{{ $member->id }}">
+                                    Delete
+                                </button>
                             </td>
                         </tr>
                         @endforeach
+                        @if ($staff->isEmpty())
+                        <tr><td colspan="7" class="text-center text-muted py-4">No staff members yet.</td></tr>
+                        @endif
                     </tbody>
                 </table>
             </div>
@@ -72,4 +79,8 @@
         </div>
     </div>
 </div>
+
+@foreach($staff as $member)
+    @include('staff.partials.delete-modal', ['member' => $member])
+@endforeach
 @endsection

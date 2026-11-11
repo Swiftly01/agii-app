@@ -65,6 +65,11 @@
                 <i class="fas fa-user menu-icon"></i>
                 <span class="menu-text">HR</span>
             </a>
+
+            <a href="{{ route('admin.staff.index') }}" class="menu-item {{ request()->routeIs('admin.staff.*') ? 'active' : '' }}">
+                <i class="fas fa-id-badge menu-icon"></i>
+                <span class="menu-text">Staff</span>
+            </a>
             {{--
         <a href="{{ url('https://agii.ng/public/admin/offer-letters') }}" class="menu-item">
             <i class="fas fa-user menu-icon"></i>

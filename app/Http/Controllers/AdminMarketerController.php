@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Marketer;
 use App\Services\Marketer\MarketerDirectory;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class AdminMarketerController extends Controller
 {
@@ -17,6 +18,34 @@ class AdminMarketerController extends Controller
             'marketers' => $this->directory->paginate($request->string('search')->toString() ?: null),
             'totals' => $this->directory->totals(),
         ]);
+    }
+
+    // PDF of the vendors marketers added: every marketer's by default, or one marketer's with ?marketer={id}
+    public function exportVendorsPdf(Request $request)
+    {
+        $marketer = $request->filled('marketer')
+            ? Marketer::with('user')->findOrFail($request->integer('marketer'))
+            : null;
+
+        $data = [
+            'vendors' => $this->directory->vendorsForExport($marketer),
+            'marketer' => $marketer,
+            'generatedAt' => now(),
+            'generatedBy' => $request->user()->full_name,
+        ];
+
+        $filename = 'vendors-added-by-' . ($marketer ? Str::slug($marketer->user?->full_name ?: 'marketer') : 'marketers')
+            . '-' . now()->format('Y-m-d') . '.pdf';
+
+        // Real PDF download when barryvdh/laravel-dompdf is installed
+        if (class_exists(\Barryvdh\DomPDF\Facade\Pdf::class)) {
+            return \Barryvdh\DomPDF\Facade\Pdf::loadView('admin.marketers.vendors-pdf', $data + ['printMode' => false])
+                ->setPaper('a4', 'landscape')
+                ->download($filename);
+        }
+
+        // Until the package is installed, open a print-ready page; "Save as PDF" in the print dialog gives the same file
+        return response()->view('admin.marketers.vendors-pdf', $data + ['printMode' => true]);
     }
 
     // One marketer's referral code and every vendor they referred, with dates and commission

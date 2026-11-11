@@ -1,4 +1,7 @@
-@extends('layout.app')
+@extends('layout.marketer')
+
+@section('title', 'Staff Profile - Agii')
+@section('page-title', 'Staff Profile')
 
 @section('content')
 <div class="container-fluid">
@@ -10,6 +13,9 @@
         <div class="col-md-6 text-end">
             <a href="{{ route('admin.staff.index') }}" class="btn btn-secondary">Back to List</a>
             <a href="{{ route('admin.staff.edit', $staff->id) }}" class="btn btn-primary">Edit Profile</a>
+            <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteStaffModal">
+                <i class="fas fa-trash me-1"></i>Delete
+            </button>
         </div>
     </div>
 
@@ -42,7 +48,7 @@
                     <p><strong>Staff ID:</strong> {{ $staff->staff_id }}</p>
                     <p><strong>Department:</strong> {{ $staff->department }}</p>
                     <p><strong>Employment Type:</strong> {{ ucfirst(str_replace('_', ' ', $staff->employment_type)) }}</p>
-                    <p><strong>Date Employed:</strong> {{ $staff->date_of_employment->format('M d, Y') }}</p>
+                    <p><strong>Date Employed:</strong> {{ $staff->date_of_employment?->format('M d, Y') ?? 'Not set' }}</p>
                     <p><strong>Next Review:</strong> {{ $staff->next_of_review ? $staff->next_of_review->format('M d, Y') : 'Not set' }}</p>
                 </div>
             </div>
@@ -78,7 +84,7 @@
                 <div class="card-body">
                     <div class="row">
                         <div class="col-md-6">
-                            <p><strong>Salary:</strong> ₦{{ number_format($staff->salary, 2) }}</p>
+                            <p><strong>Salary:</strong> ₦{{ number_format((float) $staff->salary, 2) }}</p>
                             <p><strong>Bank:</strong> {{ $staff->bank_name ?? 'Not set' }}</p>
                         </div>
                         <div class="col-md-6">
@@ -100,4 +106,6 @@
         </div>
     </div>
 </div>
+
+@include('staff.partials.delete-modal', ['member' => $staff])
 @endsection
