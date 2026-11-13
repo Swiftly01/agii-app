@@ -9,6 +9,8 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('marketer')->group(function () {
         Route::get('/dashboard', [MarketerController::class, 'dashboard'])->name('marketer.dashboard');
 
+        // Everything below needs an approved marketer
+        Route::middleware('marketer.approved')->group(function () {
         // Vendor management
         Route::get('/vendors/create', [MarketerController::class, 'createVendor'])->name('marketer.vendors.create');
         Route::post('/vendors', [MarketerController::class, 'storeVendor'])->name('marketer.vendors.store');
@@ -34,8 +36,9 @@ Route::middleware(['auth'])->group(function () {
 
         // Withdrawal route
         Route::post('/withdraw', [MarketerController::class, 'requestWithdrawal'])->name('marketer.withdraw.request');
+        });
     });
 
 
-    Route::get('/vendorslist', [MarketerController::class, 'showVendorList'])->name('marketer.vendors.index');
+    Route::get('/vendorslist', [MarketerController::class, 'showVendorList'])->middleware('marketer.approved')->name('marketer.vendors.index');
 });

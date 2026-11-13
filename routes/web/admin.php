@@ -31,6 +31,8 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::get('/marketers', [AdminMarketerController::class, 'index'])->name('admin.marketers.index');
     Route::get('/marketers/vendors/export-pdf', [AdminMarketerController::class, 'exportVendorsPdf'])->name('admin.marketers.vendors.export-pdf');
     Route::get('/marketers/{marketer}', [AdminMarketerController::class, 'show'])->name('admin.marketers.show');
+    Route::post('/marketers/{marketer}/approve', [AdminMarketerController::class, 'approve'])->name('admin.marketers.approve');
+    Route::post('/marketers/{marketer}/reject', [AdminMarketerController::class, 'reject'])->name('admin.marketers.reject');
 
     // Products Management
     Route::get('/products', [AdminController::class, 'productsForApproval'])->name('admin.products.index');

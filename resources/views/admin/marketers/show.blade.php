@@ -4,6 +4,8 @@
 @section('page-title', 'Marketer Details')
 
 @section('content')
+    @include('staff.partials.flash')
+
     <div class="card mb-4">
         <div class="card-body d-flex flex-wrap justify-content-between align-items-center">
             <div>
@@ -14,9 +16,17 @@
                     <span class="badge bg-{{ $marketer->is_active ? 'success' : 'secondary' }} ms-2">
                         {{ $marketer->is_active ? 'Active' : 'Inactive' }}
                     </span>
+                    <span class="badge {{ $marketer->status->badgeClass() }} ms-1">{{ $marketer->status->label() }}</span>
                 </div>
+                @if ($marketer->application_note)
+                    <p class="mt-2 mb-0"><strong>Application note:</strong> {{ $marketer->application_note }}</p>
+                @endif
+                @if ($marketer->isRejected() && $marketer->rejection_reason)
+                    <p class="mt-2 mb-0 text-danger"><strong>Rejected:</strong> {{ $marketer->rejection_reason }}</p>
+                @endif
             </div>
-            <div class="d-flex gap-2">
+            <div class="d-flex gap-2 align-items-start">
+                @include('admin.marketers.partials.review-actions', ['marketer' => $marketer])
                 <a href="{{ route('admin.marketers.vendors.export-pdf', ['marketer' => $marketer->id]) }}" class="btn btn-danger">
                     <i class="fas fa-file-pdf me-2"></i>Export Vendors PDF
                 </a>
@@ -42,8 +52,13 @@
     </div>
 
     <div class="card">
-        <div class="card-header">
+        <div class="card-header d-flex justify-content-between align-items-center">
             <h6 class="card-title mb-0">Referrals</h6>
+            @if ($referrals->total() > 0)
+                <a href="{{ route('admin.marketers.vendors.export-pdf', ['marketer' => $marketer->id]) }}" class="btn btn-sm btn-danger">
+                    <i class="fas fa-file-pdf me-1"></i>Export Referrals PDF
+                </a>
+            @endif
         </div>
         <div class="card-body">
             @if ($referrals->count() > 0)
@@ -101,4 +116,5 @@
             @endif
         </div>
     </div>
+    @include('admin.marketers.partials.reject-modal')
 @endsection

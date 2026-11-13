@@ -2,22 +2,49 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\MarketerStatus;
 use App\Models\Marketer;
+use App\Services\Marketer\MarketerApprovalService;
 use App\Services\Marketer\MarketerDirectory;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
 class AdminMarketerController extends Controller
 {
-    public function __construct(private readonly MarketerDirectory $directory) {}
+    public function __construct(
+        private readonly MarketerDirectory $directory,
+        private readonly MarketerApprovalService $approval,
+    ) {}
 
     // Marketer list with platform totals and per-marketer vendor and commission figures
     public function index(Request $request)
     {
         return view('admin.marketers.index', [
-            'marketers' => $this->directory->paginate($request->string('search')->toString() ?: null),
+            'marketers' => $this->directory->paginate(
+                $request->string('search')->toString() ?: null,
+                MarketerStatus::tryFrom($request->string('status')->toString()),
+            ),
             'totals' => $this->directory->totals(),
         ]);
+    }
+
+    // Approve an application, the marketer is emailed and gets full dashboard access
+    public function approve(Marketer $marketer): RedirectResponse
+    {
+        $this->approval->approve($marketer, auth()->user());
+
+        return back()->with('success', "{$marketer->user->full_name} has been approved as a marketer.");
+    }
+
+    // Reject an application with a reason that is emailed to the marketer
+    public function reject(Request $request, Marketer $marketer): RedirectResponse
+    {
+        $validated = $request->validate(['reason' => ['required', 'string', 'max:1000']]);
+
+        $this->approval->reject($marketer, auth()->user(), $validated['reason']);
+
+        return back()->with('success', "{$marketer->user->full_name}'s application was rejected.");
     }
 
     // PDF of the vendors marketers added: every marketer's by default, or one marketer's with ?marketer={id}

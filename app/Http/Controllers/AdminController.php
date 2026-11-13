@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\MarketerStatus;
 use App\Models\Category;
 use App\Models\Marketer;
 use App\Models\StaffProfile;
@@ -548,6 +549,7 @@ class AdminController extends Controller
                     'pending_earnings' => 0,
                     'paid_earnings' => 0,
                     'is_active' => 1,
+                    'status' => MarketerStatus::Approved,
                     'approved_at' => now(),
                     'approved_by' => auth()->id(),
                 ]

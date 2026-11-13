@@ -3,6 +3,7 @@
 
 namespace App\Models;
 
+use App\Enums\MarketerStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -27,7 +28,10 @@ class Marketer extends Model
         'is_active',
         'approved_at',
         'approved_by',
-        'notes'
+        'notes',
+        'status',
+        'application_note',
+        'rejection_reason',
     ];
 
     /**
@@ -42,6 +46,7 @@ class Marketer extends Model
         'paid_earnings' => 'decimal:2',
         'is_active' => 'boolean',
         'approved_at' => 'datetime',
+        'status' => MarketerStatus::class,
     ];
 
     /**
@@ -50,6 +55,27 @@ class Marketer extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    // Admin who last approved or rejected this application
+    public function reviewer(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    public function isApproved(): bool
+    {
+        return $this->status === MarketerStatus::Approved;
+    }
+
+    public function isPending(): bool
+    {
+        return $this->status === MarketerStatus::Pending;
+    }
+
+    public function isRejected(): bool
+    {
+        return $this->status === MarketerStatus::Rejected;
     }
 
     // users.referred_by stores the marketer's user id, so referrals join on user_id and not on the code

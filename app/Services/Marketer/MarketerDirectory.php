@@ -2,6 +2,7 @@
 
 namespace App\Services\Marketer;
 
+use App\Enums\MarketerStatus;
 use App\Models\CommissionTransaction;
 use App\Models\Marketer;
 use App\Models\User;
@@ -12,11 +13,12 @@ use Illuminate\Support\Collection;
 class MarketerDirectory
 {
     // Lists marketers with vendor, product and commission figures aggregated in one query
-    public function paginate(?string $search = null, int $perPage = 20): LengthAwarePaginator
+    public function paginate(?string $search = null, ?MarketerStatus $status = null, int $perPage = 20): LengthAwarePaginator
     {
         return Marketer::query()
             ->with('user:id,first_name,last_name,email,phone')
             ->when($search, fn (Builder $query) => $this->applySearch($query, $search))
+            ->when($status, fn (Builder $query) => $query->where('status', $status))
             ->withCount([
                 'referredVendors',
                 'referredVendors as vendors_with_products_count' => fn (Builder $query) => $query->whereHas('products'),
@@ -32,6 +34,7 @@ class MarketerDirectory
     {
         return [
             'marketers' => Marketer::count(),
+            'pending' => Marketer::where('status', MarketerStatus::Pending)->count(),
             'vendors' => User::where('user_type', 'vendor')->whereIn('referred_by', Marketer::select('user_id'))->count(),
             'earnings' => (float) Marketer::sum('total_earnings'),
             'commission' => (float) $this->countable(CommissionTransaction::query())->sum('commission_amount'),
@@ -75,7 +78,13 @@ class MarketerDirectory
             ->get()
             ->keyBy('user_id');
 
-        return $vendors->each(fn (User $vendor) => $vendor->setAttribute('marketer', $marketers->get($vendor->referred_by)));
+        // A single marketer's export also shows the commission each referral generated
+        $commissions = $marketer ? $this->commissionByVendor($marketer, $vendors->pluck('id')) : collect();
+
+        return $vendors->each(function (User $vendor) use ($marketers, $commissions, $marketer) {
+            $vendor->setAttribute('marketer', $marketers->get($vendor->referred_by));
+            $vendor->setAttribute('commission_earned', $marketer ? (float) ($commissions[$vendor->id] ?? 0) : null);
+        });
     }
 
     // Cancelled commissions never reach the marketer so they stay out of every total

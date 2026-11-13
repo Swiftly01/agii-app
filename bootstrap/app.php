@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\EnsureMarketerIsApproved;
 use App\Http\Middleware\EnsureUserHasRole;
 use App\Http\Middleware\EnsureUserIsAdmin;
 use App\Http\Middleware\EnsureVendorIsApproved;
@@ -18,6 +19,7 @@ return Application::configure(basePath: dirname(__DIR__))
          $middleware->alias([
         'vendor.subscription' => VendorMiddleware::class,
         'vendor.approved' => EnsureVendorIsApproved::class,
+        'marketer.approved' => EnsureMarketerIsApproved::class,
         'admin' => EnsureUserIsAdmin::class,
         'role' => EnsureUserHasRole::class,
     ]);
