@@ -4,6 +4,8 @@
 @section('page-title', 'Marketers')
 
 @section('content')
+    @include('staff.partials.flash')
+
     {{-- Platform-wide marketer totals --}}
     <div class="row mb-4">
         @foreach ([
@@ -34,9 +36,21 @@
                     <a href="{{ route('admin.marketers.vendors.export-pdf') }}" class="btn btn-sm btn-danger">
                         <i class="fas fa-file-pdf me-1"></i>Export Vendors PDF
                     </a>
+                    @if ($totals['pending'] > 0)
+                        <a href="{{ route('admin.marketers.index', ['status' => 'pending']) }}"
+                            class="badge bg-warning text-dark text-decoration-none">
+                            {{ $totals['pending'] }} awaiting approval
+                        </a>
+                    @endif
                 </div>
                 <div class="col-md-6">
                     <form method="GET" action="{{ route('admin.marketers.index') }}" class="d-flex justify-content-end">
+                        <select name="status" class="form-select me-2" style="max-width: 170px;" onchange="this.form.submit()">
+                            <option value="">All statuses</option>
+                            @foreach (\App\Enums\MarketerStatus::cases() as $option)
+                                <option value="{{ $option->value }}" @selected(request('status') === $option->value)>{{ $option->label() }}</option>
+                            @endforeach
+                        </select>
                         <input type="text" name="search" class="form-control me-2" style="max-width: 300px;"
                             placeholder="Search name, email, phone or code" value="{{ request('search') }}">
                         <button class="btn btn-outline-secondary" type="submit"><i class="fas fa-search"></i></button>
@@ -58,6 +72,7 @@
                                 <th>Earnings</th>
                                 <th>Total Commission</th>
                                 <th>Status</th>
+                                <th>Approval</th>
                                 <th>Joined</th>
                                 <th>Actions</th>
                             </tr>
@@ -78,6 +93,10 @@
                                         <span class="badge bg-{{ $marketer->is_active ? 'success' : 'secondary' }}">
                                             {{ $marketer->is_active ? 'Active' : 'Inactive' }}
                                         </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge {{ $marketer->status->badgeClass() }}">{{ $marketer->status->label() }}</span>
+                                        <div class="mt-1">@include('admin.marketers.partials.review-actions', ['marketer' => $marketer])</div>
                                     </td>
                                    <td>{{ $marketer->created_at?->format('M d, Y') ?? 'N/A' }}</td>
                                     <td>
@@ -100,4 +119,5 @@
             @endif
         </div>
     </div>
+    @include('admin.marketers.partials.reject-modal')
 @endsection

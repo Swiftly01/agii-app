@@ -351,6 +351,11 @@ class MarketerController extends Controller
 
         $marketer = $user->marketer;
 
+        // Pending and rejected marketers only see their application status
+        if (! $marketer?->isApproved()) {
+            return view('marketer.pending-approval', compact('marketer'));
+        }
+
         // Get recent vendors (last 10)
         $recentVendors = User::where('referred_by', Auth::id())
             ->where('user_type', 'vendor')
