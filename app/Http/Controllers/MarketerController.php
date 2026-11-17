@@ -767,8 +767,10 @@ private function generateUniqueSlug($title)
 
             $allImages = array_merge($currentImages, $newImagePaths);
 
-            // Handle specifications
-            $specifications = [];
+            // Handle specifications, lists and booleans aren't editable in the form so they are carried over as-is
+            $specifications = collect($product->specifications ?? [])
+                ->filter(fn ($value) => is_array($value) || is_bool($value))
+                ->all();
             if ($request->has('specifications_keys')) {
                 foreach ($request->specifications_keys as $index => $key) {
                     $value = $request->specifications_values[$index] ?? '';

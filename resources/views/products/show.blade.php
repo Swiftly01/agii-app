@@ -213,11 +213,11 @@
                 </div>
 
                 <!-- Specifications -->
-                @if ($product->specifications && count($product->specifications) > 0)
+                @if ($product->display_specifications && count($product->display_specifications) > 0)
                     <div class="specifications mt-4">
                         <h6 class="fw-bold mb-3">Key Specifications</h6>
                         <div class="row">
-                            @foreach ($product->specifications as $key => $value)
+                            @foreach ($product->display_specifications as $key => $value)
                                 <div class="col-6 mb-2">
                                     <strong>{{ ucfirst(str_replace('_', ' ', $key)) }}:</strong>
                                     <span>{{ $value }}</span>
@@ -262,11 +262,11 @@
                                 {!! nl2br(e($product->description)) !!}
                             </div>
 
-                            @if ($product->specifications && count($product->specifications) > 0)
+                            @if ($product->display_specifications && count($product->display_specifications) > 0)
                                 <div class="mt-5">
                                     <h5 class="fw-bold mb-3">Key Features</h5>
                                     <ul class="feature-list">
-                                        @foreach ($product->specifications as $key => $value)
+                                        @foreach ($product->display_specifications as $key => $value)
                                             <li><strong>{{ ucfirst(str_replace('_', ' ', $key)) }}:</strong>
                                                 {{ $value }}</li>
                                         @endforeach
@@ -278,12 +278,12 @@
                         <!-- Specifications Tab -->
                         <div class="tab-pane fade" id="specs" role="tabpanel">
                             <h4 class="fw-bold mb-4">Technical Specifications</h4>
-                            @if ($product->specifications && count($product->specifications) > 0)
+                            @if ($product->display_specifications && count($product->display_specifications) > 0)
                                 <div class="row">
                                     <div class="col-md-6">
                                         <table class="table table-bordered">
                                             <tbody>
-                                                @foreach (array_slice($product->specifications, 0, ceil(count($product->specifications) / 2)) as $key => $value)
+                                                @foreach (array_slice($product->display_specifications, 0, ceil(count($product->display_specifications) / 2)) as $key => $value)
                                                     <tr>
                                                         <td class="fw-bold" style="width: 40%;">
                                                             {{ ucfirst(str_replace('_', ' ', $key)) }}</td>
@@ -296,7 +296,7 @@
                                     <div class="col-md-6">
                                         <table class="table table-bordered">
                                             <tbody>
-                                                @foreach (array_slice($product->specifications, ceil(count($product->specifications) / 2)) as $key => $value)
+                                                @foreach (array_slice($product->display_specifications, ceil(count($product->display_specifications) / 2)) as $key => $value)
                                                     <tr>
                                                         <td class="fw-bold" style="width: 40%;">
                                                             {{ ucfirst(str_replace('_', ' ', $key)) }}</td>

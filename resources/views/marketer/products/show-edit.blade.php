@@ -232,30 +232,41 @@
                                             <div id="specificationsContainer">
                                                 @foreach ($product->specifications as $key => $value)
                                                     @if (!empty($value))
+                                                        {{-- Lists and booleans (e.g. facilities) can't be edited as plain text --}}
+                                                        @php($isEditable = is_scalar($value) && !is_bool($value))
                                                         <div class="row mb-2 specification-item">
                                                             <div class="col-md-4">
                                                                 <input type="text" class="form-control view-mode"
                                                                     value="{{ ucfirst(str_replace('_', ' ', $key)) }}"
                                                                     readonly>
-                                                                <input type="text" class="form-control edit-mode"
-                                                                    name="specifications_keys[]"
-                                                                    value="{{ $key }}" style="display: none;"
-                                                                    placeholder="Specification key">
+                                                                @if ($isEditable)
+                                                                    <input type="text" class="form-control edit-mode"
+                                                                        name="specifications_keys[]"
+                                                                        value="{{ $key }}" style="display: none;"
+                                                                        placeholder="Specification key">
+                                                                @endif
                                                             </div>
                                                             <div class="col-md-6">
-                                                                <input type="text" class="form-control view-mode"
-                                                                    value="{{ $value }}" readonly>
-                                                                <input type="text" class="form-control edit-mode"
-                                                                    name="specifications_values[]"
-                                                                    value="{{ $value }}" style="display: none;"
-                                                                    placeholder="Specification value">
+                                                                {{-- Flattened display value is always a string --}}
+                                                                <input type="text"
+                                                                    class="form-control {{ $isEditable ? 'view-mode' : '' }}"
+                                                                    value="{{ $product->display_specifications[$key] ?? '' }}"
+                                                                    readonly>
+                                                                @if ($isEditable)
+                                                                    <input type="text" class="form-control edit-mode"
+                                                                        name="specifications_values[]"
+                                                                        value="{{ $value }}" style="display: none;"
+                                                                        placeholder="Specification value">
+                                                                @endif
                                                             </div>
-                                                            <div class="col-md-2 edit-mode" style="display: none;">
-                                                                <button type="button"
-                                                                    class="btn btn-sm btn-outline-danger remove-specification">
-                                                                    <i class="bi bi-trash"></i>
-                                                                </button>
-                                                            </div>
+                                                            @if ($isEditable)
+                                                                <div class="col-md-2 edit-mode" style="display: none;">
+                                                                    <button type="button"
+                                                                        class="btn btn-sm btn-outline-danger remove-specification">
+                                                                        <i class="bi bi-trash"></i>
+                                                                    </button>
+                                                                </div>
+                                                            @endif
                                                         </div>
                                                     @endif
                                                 @endforeach
