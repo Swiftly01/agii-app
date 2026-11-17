@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\RealEstateListingController;
 use App\Http\Controllers\ReviewController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Middleware\CheckSubscription;
@@ -63,6 +64,10 @@ Route::middleware(['auth'])->group(function () {
     Route::middleware([CheckSubscription::class])->group(function () {
         // CREATE PRODUCT — vendor must be admin-approved before they can list
         Route::middleware(['vendor.approved'])->group(function () {
+            // Real estate has its own form, it must be registered before the generic /sell/{type}
+            Route::get('/sell/real-estate', [RealEstateListingController::class, 'create'])->name('products.create.real-estate');
+            Route::post('/products/real-estate', [RealEstateListingController::class, 'store'])->name('products.store.real-estate');
+
             Route::get('/sell/{type}', [ProductController::class, 'create'])->name('products.create');
             Route::post('/products', [ProductController::class, 'store'])->name('products.store');
         });

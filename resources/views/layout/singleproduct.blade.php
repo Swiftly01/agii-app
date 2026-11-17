@@ -116,8 +116,8 @@
                                 <strong>Quantity:</strong>
                                 <span>{{ $product->quantity ?? 1 }} available</span>
                             </div>
-                            @if ($product->specifications)
-                                @foreach (array_slice($product->specifications, 0, 4) as $key => $value)
+                            @if ($product->display_specifications)
+                                @foreach (array_slice($product->display_specifications, 0, 4) as $key => $value)
                                     <div class="col-6 mb-3">
                                         <strong>{{ ucfirst($key) }}:</strong>
                                         <span>{{ $value }}</span>
@@ -268,10 +268,10 @@
                             <h4 class="fw-bold mb-4">Product Description</h4>
                             <p class="mb-4">{{ $product->description }}</p>
 
-                            @if ($product->specifications && count($product->specifications) > 0)
+                            @if ($product->display_specifications && count($product->display_specifications) > 0)
                                 <h5 class="fw-bold mb-3">Key Features:</h5>
                                 <ul class="feature-list">
-                                    @foreach ($product->specifications as $key => $value)
+                                    @foreach ($product->display_specifications as $key => $value)
                                         <li><strong>{{ ucfirst($key) }}:</strong> {{ $value }}</li>
                                     @endforeach
                                 </ul>
@@ -281,11 +281,11 @@
                         <!-- Specifications Tab -->
                         <div class="tab-pane fade" id="specs" role="tabpanel">
                             <h4 class="fw-bold mb-4">Technical Specifications</h4>
-                            @if ($product->specifications && count($product->specifications) > 0)
+                            @if ($product->display_specifications && count($product->display_specifications) > 0)
                                 <div class="row">
                                     <div class="col-md-6">
                                         <table class="table table-borderless">
-                                            @foreach (array_slice($product->specifications, 0, ceil(count($product->specifications) / 2)) as $key => $value)
+                                            @foreach (array_slice($product->display_specifications, 0, ceil(count($product->display_specifications) / 2)) as $key => $value)
                                                 <tr>
                                                     <td><strong>{{ ucfirst($key) }}</strong></td>
                                                     <td>{{ $value }}</td>
@@ -295,7 +295,7 @@
                                     </div>
                                     <div class="col-md-6">
                                         <table class="table table-borderless">
-                                            @foreach (array_slice($product->specifications, ceil(count($product->specifications) / 2)) as $key => $value)
+                                            @foreach (array_slice($product->display_specifications, ceil(count($product->display_specifications) / 2)) as $key => $value)
                                                 <tr>
                                                     <td><strong>{{ ucfirst($key) }}</strong></td>
                                                     <td>{{ $value }}</td>

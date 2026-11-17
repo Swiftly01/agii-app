@@ -48,6 +48,10 @@
                         <div class="row g-4" id="categoryOptions">
                             @foreach ($categories as $category)
                             <div class="col-md-4 col-sm-6">
+                                {{-- Real estate has its own dedicated form --}}
+                                @if ($category->slug === config('real_estate_form.category_slug'))
+                                <a href="{{ route('products.create.real-estate') }}" class="text-decoration-none d-block">
+                                @endif
                                 <div class="category-card" data-category="{{ $category->id }}" data-type="{{ $category->type }}">
                                     <div class="category-icon">
                                         <i class="bi bi-{{ $category->icon ?? 'box' }}"></i>
@@ -55,6 +59,9 @@
                                     <h5>{{ $category->name }}</h5>
                                     <p class="text-muted small">{{ $category->description }}</p>
                                 </div>
+                                @if ($category->slug === config('real_estate_form.category_slug'))
+                                </a>
+                                @endif
                             </div>
                             @endforeach
                         </div>

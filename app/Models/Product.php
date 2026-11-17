@@ -132,6 +132,16 @@ class Product extends Model
         return $this->vendorContacts()->count();
     }
 
+    // Specifications flattened to printable strings, lists are joined and booleans become Yes/No
+    public function getDisplaySpecificationsAttribute(): array
+    {
+        return collect($this->specifications ?? [])->map(fn($value) => match (true) {
+            is_array($value) => implode(', ', $value),
+            is_bool($value) => $value ? 'Yes' : 'No',
+            default => (string) $value,
+        })->all();
+    }
+
     // Methods
     public function incrementViews()
     {
