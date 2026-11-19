@@ -1,6 +1,8 @@
 /* Real estate listing form, mobile-first single column that mirrors the app convention */
-.lf { --lf-green: #00b140; --lf-green-soft: #e6f6ea; --lf-border: #8fa8bb; --lf-text: #2c3e50; --lf-muted: #6f8294; --lf-error: #e53935; --lf-bg: #f6f9fc; max-width: 640px; margin: 0 auto; background: var(--lf-bg); color: var(--lf-text); min-height: 100vh; }
-.lf *, .lf *::before, .lf *::after { box-sizing: border-box; }
+/* Theme tokens are shared with the pickers, which are appended to <body> outside .lf */
+.lf, .lf-page, .lf-sheet-backdrop { --lf-green: #00b140; --lf-green-soft: #e6f6ea; --lf-border: #8fa8bb; --lf-text: #2c3e50; --lf-muted: #6f8294; --lf-error: #e53935; --lf-bg: #f6f9fc; }
+.lf { max-width: 640px; margin: 0 auto; background: var(--lf-bg); color: var(--lf-text); min-height: 100vh; }
+.lf *, .lf *::before, .lf *::after, .lf-page *, .lf-page *::before, .lf-page *::after, .lf-sheet-backdrop *, .lf-sheet-backdrop *::before, .lf-sheet-backdrop *::after { box-sizing: border-box; }
 
 /* Top bar */
 .lf-bar { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; gap: 16px; padding: 14px 20px; background: #fff; box-shadow: 0 2px 4px rgba(0, 0, 0, .08); }

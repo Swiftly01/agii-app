@@ -4,4 +4,5 @@
 return [
     'real-estate' => 'real_estate_form',
     'property-for-sale' => 'property_sale_form',
+    'land-plots-for-sale' => 'land_form',
 ];
