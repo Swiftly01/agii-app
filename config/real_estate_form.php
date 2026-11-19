@@ -3,6 +3,7 @@
 // Declarative definition of the Real Estate listing form, add a field here and the view, validation and storage pick it up.
 return [
     'category_slug' => 'real-estate',
+    'category_label' => 'Houses & Apartments for Rent',
 
     // Order of the visual blocks on the page
     'sections' => ['basic', 'details', 'pricing', 'contact'],
@@ -12,6 +13,15 @@ return [
         'max' => 10,
         'max_size_mb' => 10,
         'mimes' => ['jpg', 'jpeg', 'png', 'heic', 'webp'],
+        // When true a listing with at least one video does not need the minimum photos
+        'optional_with_video' => true,
+    ],
+
+    'videos' => [
+        'max' => 2,
+        'max_size_mb' => 100,
+        'mimes' => ['mp4', 'mov', 'webm'],
+        'mime_types' => ['video/mp4', 'video/quicktime', 'video/webm'],
     ],
 
     // Types: text, textarea, number, url, select, multiselect, checkbox, radio (select mode: page or sheet, column: products column, else specifications)

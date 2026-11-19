@@ -45,26 +45,53 @@
                         <h3 class="section-title">Choose Product Category</h3>
                         <p class="text-muted mb-4">Select the category that best matches your product</p>
 
+                        {{-- Categories with dedicated forms (real estate): one form links straight to it, several open a submenu --}}
+                        @php
+                            $formMenus = $categories->mapWithKeys(fn ($category) => [
+                                $category->id => array_key_exists($category->slug, config('listing_forms'))
+                                    ? \App\Services\Products\RealEstate\RealEstateFormSchema::menuFor($category)
+                                    : [],
+                            ]);
+                        @endphp
+
                         <div class="row g-4" id="categoryOptions">
                             @foreach ($categories as $category)
+                            @php($forms = $formMenus[$category->id])
                             <div class="col-md-4 col-sm-6">
-                                {{-- Real estate has its own dedicated form --}}
-                                @if ($category->slug === config('real_estate_form.category_slug'))
-                                <a href="{{ route('products.create.real-estate') }}" class="text-decoration-none d-block">
+                                @if (count($forms) === 1)
+                                <a href="{{ $forms[0]['url'] }}" class="text-decoration-none d-block">
                                 @endif
-                                <div class="category-card" data-category="{{ $category->id }}" data-type="{{ $category->type }}">
+                                <div class="category-card" data-category="{{ $category->id }}" data-type="{{ $category->type }}" @if (count($forms) > 1) data-form-menu="formMenu-{{ $category->id }}" @endif>
                                     <div class="category-icon">
                                         <i class="bi bi-{{ $category->icon ?? 'box' }}"></i>
                                     </div>
                                     <h5>{{ $category->name }}</h5>
                                     <p class="text-muted small">{{ $category->description }}</p>
                                 </div>
-                                @if ($category->slug === config('real_estate_form.category_slug'))
+                                @if (count($forms) === 1)
                                 </a>
                                 @endif
                             </div>
                             @endforeach
                         </div>
+
+                        {{-- Submenus for categories with several forms, shown when the category is clicked --}}
+                        @foreach ($formMenus->filter(fn ($forms) => count($forms) > 1) as $categoryId => $forms)
+                        <div id="formMenu-{{ $categoryId }}" class="form-menu mt-4" style="display: none;">
+                            <h5 class="mb-3">Select specific type:</h5>
+                            <div class="row g-3">
+                                @foreach ($forms as $form)
+                                <div class="col-md-4 col-sm-6">
+                                    <a href="{{ $form['url'] }}" class="text-decoration-none d-block">
+                                        <div class="border rounded-3 p-3 text-center bg-white">
+                                            <h6 class="mb-0">{{ $form['label'] }}</h6>
+                                        </div>
+                                    </a>
+                                </div>
+                                @endforeach
+                            </div>
+                        </div>
+                        @endforeach
 
                         <!-- Subcategory Selection -->
                         <div id="subcategorySection" class="mt-4" style="display: none;">
@@ -906,6 +933,16 @@ alert(`Please upload at least 5 photos. You currently have ${uploadedImages.leng
             card.addEventListener('click', function() {
                 document.querySelectorAll('.category-card').forEach(c => c.classList.remove('selected'));
                 this.classList.add('selected');
+
+                // Categories with several dedicated forms open their own submenu instead of the generic steps
+                document.querySelectorAll('.form-menu').forEach(menu => menu.style.display = 'none');
+                if (this.dataset.formMenu) {
+                    selectedCategory = null;
+                    document.getElementById('subcategorySection').style.display = 'none';
+                    document.getElementById('nextToStep2').disabled = true;
+                    document.getElementById(this.dataset.formMenu).style.display = 'block';
+                    return;
+                }
 
                 selectedCategory = this.dataset.category;
                 PriceFields.sync(this.dataset.type === 'service');

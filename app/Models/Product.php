@@ -11,6 +11,9 @@ class Product extends Model
 {
     use HasFactory;
 
+    // Cover shown for listings that only have a video
+    public const VIDEO_PLACEHOLDER = 'images/video-placeholder.svg';
+
     protected $fillable = [
         'user_id',
         'store_id',
@@ -24,6 +27,7 @@ class Product extends Model
         'location',
         'quantity',
         'images',
+        'videos',
         'specifications',
         'rating',
         'review_count',
@@ -43,6 +47,7 @@ class Product extends Model
 
     protected $casts = [
         'images' => 'array',
+        'videos' => 'array',
         'specifications' => 'array',
         'tags' => 'array',
         'price' => 'decimal:2',
@@ -169,6 +174,42 @@ class Product extends Model
         $this->rating = round($this->reviews()->avg('rating') ?? 0, 1);
         $this->review_count = $this->reviews()->count();
         $this->saveQuietly();
+    }
+
+    // Categories listed in config/listing_forms.php (rent, sale) have their own post and edit form
+    public function isRealEstate(): bool
+    {
+        return in_array($this->category?->slug, array_keys(config('listing_forms')), true);
+    }
+
+    // Only listings in a category that has its own listing form
+    public function scopeRealEstate($query)
+    {
+        return $query->whereHas('category', fn ($category) => $category->whereIn('slug', array_keys(config('listing_forms'))));
+    }
+
+    // Video-only listings show a placeholder wherever a cover photo is expected, so images[0] never breaks
+    public function getImagesAttribute($value): ?array
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        $images = json_decode($value, true) ?: [];
+
+        return $images ?: ($this->videos ? [self::VIDEO_PLACEHOLDER] : []);
+    }
+
+    // The photos really uploaded for this listing, without the video placeholder
+    public function storedImages(): array
+    {
+        return json_decode($this->attributes['images'] ?? '[]', true) ?: [];
+    }
+
+    // Owners can manage their own products, admins can manage any
+    public function scopeManageableBy($query, User $user)
+    {
+        return $user->isAdmin() ? $query : $query->where('user_id', $user->id);
     }
 
     // Services show seller contact buttons instead of a price

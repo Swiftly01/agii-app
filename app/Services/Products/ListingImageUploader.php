@@ -3,6 +3,7 @@
 namespace App\Services\Products;
 
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 
 final class ListingImageUploader
@@ -19,6 +20,16 @@ final class ListingImageUploader
         }
 
         return array_map(fn (UploadedFile $file) => $this->move($file, $directory), $files);
+    }
+
+    // Removes previously stored photos, anything outside the listing images directory is ignored
+    public function delete(array $paths): void
+    {
+        foreach ($paths as $path) {
+            if (str_starts_with($path, self::DIRECTORY . '/')) {
+                File::delete(public_path($path));
+            }
+        }
     }
 
     private function move(UploadedFile $file, string $directory): string

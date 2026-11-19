@@ -1,20 +1,25 @@
 @extends('layout.layout')
-@section('title', 'Post new ad')
+{{-- Shared by posting and editing, $listing is only set when editing --}}
+@php($listing = $listing ?? null)
+@section('title', $listing ? 'Edit ad' : 'Post new ad')
 
 @push('styles')
     <link rel="stylesheet" href="{{ asset('css/listing-form.css') }}">
 @endpush
 
 @section('content')
-<div class="lf" data-listing-form data-action="{{ route('products.store.real-estate') }}">
+<div class="lf" data-listing-form data-action="{{ $listing ? route('products.update.real-estate', $listing->slug) : route('products.store.' . $schema->categorySlug()) }}">
     <header class="lf-bar">
         <a href="{{ url()->previous() }}" class="lf-bar__back" aria-label="Back"><i class="bi bi-arrow-left"></i></a>
-        <h1 class="lf-bar__title">Post new ad</h1>
+        <h1 class="lf-bar__title">{{ $listing ? 'Edit ad' : 'Post new ad' }}</h1>
         <button type="button" class="lf-bar__clear" data-form-clear><i class="bi bi-eraser-fill"></i> Clear</button>
     </header>
 
     <form id="listingForm" class="lf-form" novalidate enctype="multipart/form-data">
         @csrf
+        @if ($listing)
+            @method('PUT')
+        @endif
 
         @foreach ($schema->sections() as $section => $fields)
             <section class="lf-section lf-section--{{ $section }}">
@@ -24,10 +29,11 @@
 
                     <div class="lf-input lf-input--static">
                         <span class="lf-input__small">Category*</span>
-                        <span>Houses &amp; Apartments for Rent</span>
+                        <span>{{ $schema->categoryLabel() }}</span>
                     </div>
 
-                    <x-listing.photos :photos="$schema->photos()" />
+                    <x-listing.photos :photos="$schema->photos()" :existing="$listing?->storedImages() ?? []" />
+                    <x-listing.videos :videos="$schema->videos()" :existing="$listing?->videos ?? []" :replaces-photos="$schema->photos()['optional_with_video'] ?? false" />
                     @php($fields = $fields->except('title'))
                 @endif
 
@@ -44,7 +50,7 @@
 
         <div class="lf-submit">
             <div class="lf-error lf-error--form" data-form-error></div>
-            <button type="submit" class="lf-btn lf-btn--primary" data-form-submit>Post ad</button>
+            <button type="submit" class="lf-btn lf-btn--primary" data-form-submit>{{ $listing ? 'Save changes' : 'Post ad' }}</button>
         </div>
     </form>
 </div>

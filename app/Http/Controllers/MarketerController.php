@@ -735,7 +735,7 @@ private function generateUniqueSlug($title)
             ]);
 
             // Handle image updates
-            $currentImages = $product->images ?? [];
+            $currentImages = $product->storedImages();
 
             // Remove specified images
             if ($request->has('removed_images')) {
