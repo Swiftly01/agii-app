@@ -1124,6 +1124,11 @@ class ProductController extends Controller
     {
         $product = $this->findManageable($slug);
 
+        // Real estate listings use their own form
+        if ($product->isRealEstate()) {
+            return redirect()->route('products.edit.real-estate', $product->slug);
+        }
+
         $categories = Category::active()->mainCategories()->get();
 
         return view('products.edit', compact('product', 'categories'));
@@ -1157,7 +1162,7 @@ class ProductController extends Controller
 
         try {
             // Handle image uploads if new images are provided
-            $imagePaths = $product->images ?? [];
+            $imagePaths = $product->storedImages();
 
             if ($request->hasFile('images')) {
                 // Delete old images

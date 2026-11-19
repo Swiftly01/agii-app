@@ -9,7 +9,13 @@
                     <!-- Main Image Swiper -->
                     <div class="swiper main-image-slider rounded-3">
                         <div class="swiper-wrapper">
-                            @foreach ($product->images ?? ['https://via.placeholder.com/600x400'] as $image)
+                            {{-- Videos come first, photos are the real uploads without the video placeholder --}}
+                            @foreach ($product->videos ?? [] as $video)
+                                <div class="swiper-slide">
+                                    <video src="{{ url($video) }}" controls preload="metadata" class="w-100" style="max-height:500px;background:#000;"></video>
+                                </div>
+                            @endforeach
+                            @foreach ($product->storedImages() ?: ($product->videos ? [] : ['https://via.placeholder.com/600x400']) as $image)
                                 <div class="swiper-slide">
                                     <img src="{{ url($image) }}" alt="{{ $product->title }}" class="img-fluid w-100">
                                 </div>
@@ -22,7 +28,12 @@
                     <!-- Thumbnail Swiper -->
                     <div class="swiper swiper-thumbs mt-3">
                         <div class="swiper-wrapper">
-                            @foreach ($product->images ?? ['https://via.placeholder.com/600x400'] as $image)
+                            @foreach ($product->videos ?? [] as $video)
+                                <div class="swiper-slide d-flex align-items-center justify-content-center bg-dark rounded-2 cursor-pointer" style="height:80px;">
+                                    <i class="bi bi-play-circle-fill text-white fs-3"></i>
+                                </div>
+                            @endforeach
+                            @foreach ($product->storedImages() ?: ($product->videos ? [] : ['https://via.placeholder.com/600x400']) as $image)
                                 <div class="swiper-slide">
                                     <img src="{{ url($image) }}" class="img-fluid rounded-2 cursor-pointer">
                                 </div>

@@ -4,7 +4,7 @@
     $multiple = $field['type'] === 'multiselect';
     $selected = collect(old($field['name'], $value))->filter(fn ($v) => $v !== null && $v !== '')->values()->all();
     $inputName = $field['name'] . ($multiple ? '[]' : '');
-    $default = collect($field['default'] ?? $value)->filter(fn ($v) => $v !== null && $v !== '')->values()->all();
+    $default = collect($value ?? $field['default'] ?? null)->filter(fn ($v) => $v !== null && $v !== '')->values()->all();
     $config = [
         'title' => $field['label'],
         'mode' => $field['mode'] ?? 'page',

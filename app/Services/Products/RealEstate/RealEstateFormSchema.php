@@ -2,17 +2,40 @@
 
 namespace App\Services\Products\RealEstate;
 
+use App\Models\Category;
 use App\Models\Location;
+use App\Models\Product;
 use App\Models\User;
 use Illuminate\Support\Collection;
 use Illuminate\Validation\Rule;
 
 final class RealEstateFormSchema
 {
+    public function __construct(private readonly string $form = 'real_estate_form') {}
+
+    // Schema for a category slug, only categories listed in config/listing_forms.php have a form
+    public static function forCategory(string $slug): self
+    {
+        return new self(config("listing_forms.{$slug}") ?? abort(404));
+    }
+
+    // Forms offered under a category tile: its own form plus the forms of its active subcategories
+    public static function menuFor(Category $category): array
+    {
+        return collect([$category->slug, ...$category->children()->active()->pluck('slug')->all()])
+            ->filter(fn (string $slug) => config("listing_forms.{$slug}"))
+            ->map(fn (string $slug) => [
+                'label' => self::forCategory($slug)->categoryLabel(),
+                'url' => route("products.create.{$slug}"),
+            ])
+            ->values()
+            ->all();
+    }
+
     // Normalised field definitions keyed by field name
     public function fields(): Collection
     {
-        return collect(config('real_estate_form.fields'))
+        return collect($this->config('fields'))
             ->map(fn (array $field, string $name) => $this->normalise($name, $field));
     }
 
@@ -21,30 +44,68 @@ final class RealEstateFormSchema
     {
         $fields = $this->fields();
 
-        return collect(config('real_estate_form.sections'))
+        return collect($this->config('sections'))
             ->mapWithKeys(fn (string $section) => [$section => $fields->where('section', $section)]);
     }
 
     public function photos(): array
     {
-        return config('real_estate_form.photos');
+        return $this->config('photos');
+    }
+
+    public function videos(): array
+    {
+        return $this->config('videos');
     }
 
     public function categorySlug(): string
     {
-        return config('real_estate_form.category_slug');
+        return $this->config('category_slug');
     }
 
-    // Validation rules for every schema field plus the photo uploads
+    // Name shown as the fixed category on the form
+    public function categoryLabel(): string
+    {
+        return $this->config('category_label');
+    }
+
+    // Validation rules for every schema field plus the photo and video uploads, the photo minimum is checked in mediaError()
     public function rules(): array
     {
         $photos = $this->photos();
+        $videos = $this->videos();
 
         return [
             ...$this->fields()->mapWithKeys(fn (array $field, string $name) => $this->fieldRules($name, $field))->all(),
-            'images' => ['required', 'array', "min:{$photos['min']}", "max:{$photos['max']}"],
+            'images' => ['nullable', 'array'],
             'images.*' => ['image', 'mimes:' . implode(',', $photos['mimes']), 'max:' . $photos['max_size_mb'] * 1024],
+            'videos' => ['nullable', 'array'],
+            'videos.*' => ['file', 'mimetypes:' . implode(',', $videos['mime_types']), 'max:' . $videos['max_size_mb'] * 1024],
         ];
+    }
+
+    // Checks the final photo and video totals, returns an error message or null when the media is fine
+    public function mediaError(int $photoCount, int $videoCount): ?string
+    {
+        $photos = $this->photos();
+        $videos = $this->videos();
+        $videoReplaces = $photos['optional_with_video'] ?? false;
+
+        if ($photoCount > $photos['max']) {
+            return "You can add up to {$photos['max']} photos.";
+        }
+
+        if ($videoCount > $videos['max']) {
+            return "You can add up to {$videos['max']} videos.";
+        }
+
+        if ($photoCount < $photos['min'] && ! ($videoReplaces && $videoCount > 0)) {
+            return $videoReplaces
+                ? "Please add at least {$photos['min']} photos or upload a video."
+                : "Please add at least {$photos['min']} photos.";
+        }
+
+        return null;
     }
 
     // Initial values for the form, config defaults first then user profile data
@@ -53,6 +114,23 @@ final class RealEstateFormSchema
         return $this->fields()
             ->map(fn (array $field) => $field['default'] ?? ($field['default_from'] ? $user->{$field['default_from']} : null))
             ->all();
+    }
+
+    // Form values for an existing listing, the inverse of how RealEstateListingService stores them
+    public function valuesFor(Product $product): array
+    {
+        $specifications = $product->specifications ?? [];
+
+        return $this->fields()
+            ->map(fn (array $field, string $name) => isset($field['column'])
+                ? $product->{$field['column']}
+                : ($specifications[$name] ?? $field['default'] ?? null))
+            ->all();
+    }
+
+    private function config(string $key): mixed
+    {
+        return config("{$this->form}.{$key}");
     }
 
     private function normalise(string $name, array $field): array

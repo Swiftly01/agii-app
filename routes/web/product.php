@@ -21,6 +21,9 @@ Route::get('/home/{category?}', [ProductController::class, 'homeByCategory'])
 Route::middleware(['auth', CheckSubscription::class])->group(function () {
     Route::get('/products/{slug}/edit', [ProductController::class, 'edit'])->name('products.edit');
     Route::put('/products/{slug}', [ProductController::class, 'update'])->name('products.update');
+    // Real estate has its own edit form, POST is accepted too in case the form script can't send PUT
+    Route::get('/products/{slug}/edit/real-estate', [RealEstateListingController::class, 'edit'])->name('products.edit.real-estate');
+    Route::match(['put', 'post'], '/products/{slug}/real-estate', [RealEstateListingController::class, 'update'])->name('products.update.real-estate');
     Route::delete('/products/{slug}', [ProductController::class, 'destroy'])->name('products.destroy');
 });
 
@@ -64,9 +67,11 @@ Route::middleware(['auth'])->group(function () {
     Route::middleware([CheckSubscription::class])->group(function () {
         // CREATE PRODUCT — vendor must be admin-approved before they can list
         Route::middleware(['vendor.approved'])->group(function () {
-            // Real estate has its own form, it must be registered before the generic /sell/{type}
-            Route::get('/sell/real-estate', [RealEstateListingController::class, 'create'])->name('products.create.real-estate');
-            Route::post('/products/real-estate', [RealEstateListingController::class, 'store'])->name('products.store.real-estate');
+            // Each listing form (rent, sale) is registered per category slug, before the generic /sell/{type}
+            foreach (array_keys(config('listing_forms')) as $slug) {
+                Route::get("/sell/{$slug}", [RealEstateListingController::class, 'create'])->defaults('category', $slug)->name("products.create.{$slug}");
+                Route::post("/products/{$slug}", [RealEstateListingController::class, 'store'])->defaults('category', $slug)->name("products.store.{$slug}");
+            }
 
             Route::get('/sell/{type}', [ProductController::class, 'create'])->name('products.create');
             Route::post('/products', [ProductController::class, 'store'])->name('products.store');
