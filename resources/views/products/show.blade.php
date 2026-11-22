@@ -126,6 +126,9 @@
                     </div>
                 </div>
 
+                <!-- In-app chat with the seller -->
+                <x-chat-with-seller :product="$product" class="mb-2" />
+
                 <!-- Action Buttons -->
                 <div class="action-buttons d-grid gap-2 d-md-flex mb-4">
                     <button class="btn btn-whatsapp flex-fill contact-seller" data-vendor-id="{{ $product->user_id }}"
