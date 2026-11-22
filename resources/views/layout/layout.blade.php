@@ -326,9 +326,16 @@
                     <div
                         class="col-sm-8 col-lg-4 d-flex justify-content-end gap-5 align-items-center mt-4 mt-sm-0 justify-content-center justify-content-sm-end order-2 order-lg-3">
                         <ul class="d-flex justify-content-end list-unstyled m-0">
-                            <li>
+                            
+                                                        <li>
                                 <a href="/store-around-me" class="bg-light p-2 mx-1">Store Around Me</a>
                             </li>
+                            @auth
+                                <li>
+                                    <x-chat-inbox-link />
+                                </li>
+                            @endauth
+                            <li class="nav-item dropdown"></li>
                             <li class="nav-item dropdown">
                                 <a href="#" class="bg-light p-2 mx-1 dropdown-toggle" id="userDropdown" role="button"
                                     data-bs-toggle="dropdown" aria-expanded="false">

@@ -4,10 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Contracts\Chatable;
 use App\Support\SellerContact;
 use Illuminate\Support\Str;
 
-class Product extends Model
+class Product extends Model implements Chatable
 {
     use HasFactory;
 
@@ -221,6 +222,27 @@ class Product extends Model
     public function sellerContact(): SellerContact
     {
         return SellerContact::for($this->user);
+    }
+
+    // Chatable: the vendor who owns this listing receives buyer messages
+    public function chatSeller(): User
+    {
+        return $this->user;
+    }
+
+    public function chatTitle(): string
+    {
+        return $this->title;
+    }
+
+    public function chatUrl(): string
+    {
+        return route('product.show', $this->slug);
+    }
+
+    public function chatThumbnail(): string
+    {
+        return $this->image_urls[0] ?? asset(self::VIDEO_PLACEHOLDER);
     }
 
     public function isBoosted(): bool
