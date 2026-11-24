@@ -104,7 +104,9 @@ class RegisterController extends Controller
                 'instagram_url' => $data['instagram_link'] ?? null,
                 'twitter_url' => $data['twitter_link'] ?? null,
                 'whatsapp_number' => $data['whatsapp_link'] ?? null,
-                'vendor_status' => \App\Enums\VendorStatus::Pending->value,
+                // Vendors are approved on sign-up, no admin review step
+                'vendor_status' => \App\Enums\VendorStatus::Approved->value,
+                'vendor_approved_at' => now(),
             ]);
         } else {
             // Add customer-specific fields

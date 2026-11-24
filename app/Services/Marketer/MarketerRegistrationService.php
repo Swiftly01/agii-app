@@ -11,7 +11,7 @@ final class MarketerRegistrationService
 {
     public function __construct(private readonly MarketerReferralCodeGenerator $referralCodes) {}
 
-    // Expects data already validated by MarketerRegisterRequest, creates the login and its pending marketer profile together
+    // Expects data already validated by MarketerRegisterRequest, creates the login and its marketer profile together, approved straight away
     public function register(array $data): User
     {
         return DB::transaction(function () use ($data) {
@@ -31,8 +31,9 @@ final class MarketerRegistrationService
             Marketer::create([
                 'user_id' => $user->id,
                 'referral_code' => $this->referralCodes->generate($data['first_name']),
-                'is_active' => false,
-                'status' => MarketerStatus::Pending,
+                'is_active' => true,
+                'status' => MarketerStatus::Approved,
+                'approved_at' => now(),
                 'application_note' => $data['application_note'] ?? null,
             ]);
 

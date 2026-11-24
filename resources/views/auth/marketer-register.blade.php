@@ -14,8 +14,8 @@
     <div class="phone-card">
         <div class="phone-header">
             <div class="phone-icon"><i class="bi bi-megaphone"></i></div>
-            <h1 class="h3 mb-1">Become a marketer</h1>
-            <p class="mb-0 small">Onboard vendors and earn commission. Applications are reviewed by our team.</p>
+            <h1 class="mb-1 h3">Become a marketer</h1>
+            <p class="mb-0 small">Onboard vendors and earn commission. Sign up and start right away.</p>
         </div>
 
         <div class="phone-body">
@@ -118,12 +118,12 @@
                     </div>
                 </div>
 
-                <button type="submit" class="btn btn-primary w-100 mt-4">
+                <button type="submit" class="mt-4 btn btn-primary w-100">
                     <i class="bi bi-send me-2"></i>Submit application
                 </button>
             </form>
 
-            <p class="text-center small text-muted mt-4 mb-0">
+            <p class="mt-4 mb-0 text-center small text-muted">
                 Already applied? <a href="{{ route('login') }}">Log in</a>
             </p>
         </div>
