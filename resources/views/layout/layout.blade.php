@@ -12,6 +12,7 @@
     <meta name="author" content="Agii">
     <meta name="keywords" content="Agii Buy and Sell Anything in Nigeria">
     <meta name="description" content="Agii | Buy and Sell Anything in Nigeria">
+    @stack('meta')
 
     <link rel="apple-touch-icon" sizes="192x192" href="/images/icons/launchericon-192x192.png">
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">

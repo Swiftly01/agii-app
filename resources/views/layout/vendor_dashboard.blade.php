@@ -481,7 +481,7 @@
     <!-- Sidebar -->
     <div class="sidebar">
         <div class="sidebar-header">
-            <h1 class="sidebar-logo">Agii Vendor</h1>
+            <h1 class="sidebar-logo"><img src="{{ asset('images/agiilogo3.png') }}" width="100" alt="Agii"></h1>
         </div>
 
         <div class="sidebar-menu">

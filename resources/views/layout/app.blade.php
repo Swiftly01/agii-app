@@ -72,7 +72,7 @@
                         {{-- <span class="app-brand-logo demo">
 
                         </span> --}}
-                        <img src="/assets/img/logo-img.png" alt="Company Logo" class="logo" width='90'>
+                        <img src="{{ asset('images/agiilogo3.png') }}" alt="Company Logo" class="logo" width='90'>
                         <!--<span class="app-brand-text demo menu-text fw-bolder ms-2 text-capitalize">Otp</span>-->
                     </a>
 

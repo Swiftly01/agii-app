@@ -434,7 +434,7 @@
                 <div class="auth-container">
                     <!-- Auth Header -->
                     <div class="auth-header">
-                        <div class="auth-logo">Agii</div>
+                        <div class="auth-logo"><img src="{{ asset('images/agiilogo3.png') }}" width="120" alt="Agii"></div>
                         <p class="auth-subtitle">Join thousands of buyers and sellers in Nigeria's fastest growing
                             marketplace</p>
                     </div>

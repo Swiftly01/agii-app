@@ -16,7 +16,7 @@
         <!-- Sidebar -->
         <nav class="navbar navbar-expand-lg navbar-light bg-white sidebar d-none">
             <div class="container-fluid">
-                <a class="navbar-brand sidebar-logo" href="#">Agii Vendor</a>
+                <a class="navbar-brand sidebar-logo" href="#"><img src="{{ asset('images/agiilogo3.png') }}" width="100" alt="Agii"></a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#vendorSidebar">
                     <span class="navbar-toggler-icon"></span>
                 </button>
