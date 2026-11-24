@@ -3,7 +3,7 @@
         <div class="logo">
             <!--<i class="fas fa-leaf logo-icon"></i>-->
             <!--<span class="logo-text">Agii</span>-->
-            <img src='https://agii.ng/images/Agiilogo2.png' class='logo-text ' width='100' />
+            <img src="{{ asset('images/agiilogo3.png') }}" class='logo-text ' width='100' />
         </div>
         <button class="toggle-sidebar" id="toggleSidebar">
             <i class="fas fa-chevron-left"></i>

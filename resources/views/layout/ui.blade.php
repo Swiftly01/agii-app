@@ -179,7 +179,7 @@
                 <div class="col-sm-4 col-lg-3 text-center text-sm-start">
                     <div class="main-logo">
                         <a href="index.html">
-                            <img src="{{ asset('images/Agiilogo2.png') }}" width="100" alt="logo"
+                            <img src="{{ asset('images/agiilogo3.png') }}" width="100" alt="logo"
                                 class="img-fluid">
                         </a>
                     </div>
@@ -1167,7 +1167,7 @@
 
                 <div class="col-lg-3 col-md-6 col-sm-6">
                     <div class="footer-menu">
-                        <img src="{{ asset('images/Agiilogo2.png') }}" width="100" alt="logo" class="mb-3">
+                        <img src="{{ asset('images/agiilogo3.png') }}" width="100" alt="logo" class="mb-3">
                         <p class="text-white-50 mb-4">Your trusted marketplace for buying and selling anything in
                             Nigeria. Quality products, great deals.</p>
                         <div class="social-links mt-4">

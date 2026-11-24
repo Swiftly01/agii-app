@@ -1,8 +1,7 @@
 <div class="sidebar" id="sidebar">
     <div class="sidebar-header">
         <div class="logo">
-            <i class="fas fa-leaf logo-icon"></i>
-            <span class="logo-text">Agii Marketer</span>
+            <img src="{{ asset('images/agiilogo3.png') }}" class="logo-text" width="100" alt="Agii">
         </div>
         <button class="toggle-sidebar" id="toggleSidebar">
             <i class="fas fa-chevron-left"></i>

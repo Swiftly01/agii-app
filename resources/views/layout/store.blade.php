@@ -432,7 +432,7 @@
         <div class="container">
             <div class="d-flex justify-content-between align-items-center">
                 <a href="/" class="agii-logo">
-                    <i class="bi bi-shop"></i> Agii
+                    <img src="{{ asset('images/agiilogo3.png') }}" height="36" alt="Agii">
                 </a>
                 <div class="header-actions">
                     <a href="/search" class="text-decoration-none text-dark">

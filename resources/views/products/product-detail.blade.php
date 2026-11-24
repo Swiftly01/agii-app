@@ -1,5 +1,29 @@
 @extends('layout.layout')
 @section('title', $product->title . ' - Product Details')
+
+@push('meta')
+    @php
+        // First real photo; video-only listings (no photo) fall back to the Agii logo
+        $ogPhoto = $product->storedImages()[0] ?? null;
+        $ogImage = $ogPhoto
+            ? (\Illuminate\Support\Str::startsWith($ogPhoto, ['http://', 'https://']) ? $ogPhoto : url($ogPhoto))
+            : asset('images/agiilogo3.png');
+        $ogTitle = $product->title . (! $product->isService() && $product->price ? ' - ₦' . number_format($product->price) : '');
+        $ogDescription = \Illuminate\Support\Str::limit(trim(preg_replace('/\s+/', ' ', strip_tags((string) $product->description))), 200)
+            ?: 'View this listing on Agii - Buy and Sell Anything in Nigeria';
+    @endphp
+    <meta property="og:site_name" content="Agii">
+    <meta property="og:type" content="product">
+    <meta property="og:title" content="{{ $ogTitle }}">
+    <meta property="og:description" content="{{ $ogDescription }}">
+    <meta property="og:url" content="{{ url()->current() }}">
+    <meta property="og:image" content="{{ $ogImage }}">
+    <meta property="og:image:alt" content="{{ $product->title }}">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{ $ogTitle }}">
+    <meta name="twitter:description" content="{{ $ogDescription }}">
+    <meta name="twitter:image" content="{{ $ogImage }}">
+@endpush
 @section('content')
 
     <div class="container-fluid py-5">

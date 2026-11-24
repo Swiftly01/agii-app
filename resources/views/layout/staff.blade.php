@@ -106,8 +106,8 @@
             <div class="sidebar-header">
                 <div class="sidebar-brand">
                     <div class="logo">
-                        @if (file_exists(public_path('/images/Agiilogo2.png')))
-                            <img src="{{ asset('https://agii.ng/images/Agiilogo2.png') }}" alt="Company Logo"
+                        @if (file_exists(public_path('/images/agiilogo3.png')))
+                            <img src="{{ asset('images/agiilogo3.png') }}" alt="Company Logo"
                                 class="img-fluid" width='300'>
                         @else
                             <i class="fas fa-building"></i>
