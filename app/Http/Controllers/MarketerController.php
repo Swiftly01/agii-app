@@ -482,15 +482,15 @@ class MarketerController extends Controller
                 'city' => $request->city,
                 'address' => $request->address,
                 'referral_code' => $vendorReferralCode,
-                'vendor_status' => \App\Enums\VendorStatus::Pending->value,
+                'vendor_status' => \App\Enums\VendorStatus::Approved->value,
+                'vendor_approved_at' => now(),
                 'referred_by' => Auth::id(),
                 'email_verified_at' => now(), // Auto-verify since marketer is adding
                 'terms_accepted' => true,
             ]);
 
-            // The vendor starts as pending, products can be posted once an admin approves the vendor
             return redirect()->route('marketer.vendors.show', $vendor->id)
-                ->with('success', 'Vendor created and sent for admin approval. You can add products once they are approved.');
+                ->with('success', 'Vendor created successfully. You can start adding products for them.');
         } catch (\Exception $e) {
             return redirect()->back()
                 ->withInput()

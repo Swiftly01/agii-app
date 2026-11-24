@@ -18,7 +18,7 @@ class MarketerRegisterController extends Controller
         return view('auth.marketer-register');
     }
 
-    // After sign up the home route sends them to verify their email, then to the dashboard that shows pending approval
+    // After sign up the home route sends them to verify their email, then to their dashboard
     public function store(MarketerRegisterRequest $request): RedirectResponse
     {
         $user = $this->registration->register($request->validated());
@@ -29,6 +29,6 @@ class MarketerRegisterController extends Controller
         $request->session()->regenerate();
 
         return redirect()->route('verification.notice')
-            ->with('success', 'Registration successful! Please verify your email address. Our team will review your application after that.');
+            ->with('success', 'Registration successful! Please verify your email address to get started.');
     }
 }
