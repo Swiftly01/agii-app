@@ -19,7 +19,7 @@
         </div>
 
         <div class="phone-body">
-            <form method="POST" action="{{ route('marketer.register.store') }}" novalidate>
+            <form method="POST" action="{{ route('marketer.register.store') }}" enctype="multipart/form-data" novalidate>
                 @csrf
 
                 <div class="row g-3">
@@ -74,6 +74,35 @@
                         <input type="text" id="address" name="address" value="{{ old('address') }}"
                             class="form-control @error('address') is-invalid @enderror" required>
                         @error('address')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
+
+                    <div class="col-sm-6">
+                        <label for="years_of_experience" class="form-label fw-semibold">Years of experience</label>
+                        <input type="number" id="years_of_experience" name="years_of_experience" min="0" max="60"
+                            value="{{ old('years_of_experience') }}"
+                            class="form-control @error('years_of_experience') is-invalid @enderror" required>
+                        @error('years_of_experience')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
+
+                    <div class="col-sm-6">
+                        <label for="education_level" class="form-label fw-semibold">Level of education</label>
+                        <select id="education_level" name="education_level"
+                            class="form-select @error('education_level') is-invalid @enderror" required>
+                            <option value="">Select level</option>
+                            @foreach (\App\Enums\EducationLevel::options() as $value => $label)
+                                <option value="{{ $value }}" @selected(old('education_level') === $value)>{{ $label }}</option>
+                            @endforeach
+                        </select>
+                        @error('education_level')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
+
+                    <div class="col-12">
+                        <label for="certificate" class="form-label fw-semibold">
+                            Certificate <span class="text-muted fw-normal">(optional, PDF, JPG or PNG up to 5MB)</span>
+                        </label>
+                        <input type="file" id="certificate" name="certificate" accept=".pdf,.jpg,.jpeg,.png"
+                            class="form-control @error('certificate') is-invalid @enderror">
+                        @error('certificate')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
 
                     <div class="col-12">

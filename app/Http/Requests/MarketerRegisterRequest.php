@@ -2,8 +2,10 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\EducationLevel;
 use App\Support\PhoneNumber;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 final class MarketerRegisterRequest extends FormRequest
 {
@@ -34,6 +36,10 @@ final class MarketerRegisterRequest extends FormRequest
             'local_government' => ['required', 'string', 'max:255'],
             'address' => ['required', 'string', 'max:255'],
             'application_note' => ['nullable', 'string', 'max:1000'],
+            'years_of_experience' => ['required', 'integer', 'between:0,60'],
+            'education_level' => ['required', Rule::enum(EducationLevel::class)],
+            // Certificate is optional, kept to common document and photo formats up to 5MB
+            'certificate' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
             'agree_terms' => ['accepted'],
         ];
     }
@@ -43,6 +49,10 @@ final class MarketerRegisterRequest extends FormRequest
         return [
             'phone.regex' => 'Enter a valid phone number, for example 0803 123 4567.',
             'phone.unique' => 'This phone number is already registered.',
+            'years_of_experience.between' => 'Years of experience must be between 0 and 60.',
+            'education_level.required' => 'Select your highest level of education.',
+            'certificate.mimes' => 'The certificate must be a PDF, JPG or PNG file.',
+            'certificate.max' => 'The certificate must not be larger than 5MB.',
             'agree_terms.accepted' => 'You must accept the terms and conditions.',
         ];
     }

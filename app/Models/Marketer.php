@@ -3,6 +3,7 @@
 
 namespace App\Models;
 
+use App\Enums\EducationLevel;
 use App\Enums\MarketerStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -32,6 +33,9 @@ class Marketer extends Model
         'status',
         'application_note',
         'rejection_reason',
+        'years_of_experience',
+        'education_level',
+        'certificate_path',
     ];
 
     /**
@@ -47,6 +51,8 @@ class Marketer extends Model
         'is_active' => 'boolean',
         'approved_at' => 'datetime',
         'status' => MarketerStatus::class,
+        'years_of_experience' => 'integer',
+        'education_level' => EducationLevel::class,
     ];
 
     /**
@@ -61,6 +67,12 @@ class Marketer extends Model
     public function reviewer(): BelongsTo
     {
         return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    // True when the marketer attached an optional certificate at sign up
+    public function hasCertificate(): bool
+    {
+        return ! empty($this->certificate_path);
     }
 
     public function isApproved(): bool

@@ -202,6 +202,12 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->activeBoostSubscription() !== null;
     }
 
+    // The vendor's single paid slot in the homepage hero carousel
+    public function heroSpotlight()
+    {
+        return $this->hasOne(HeroSpotlight::class);
+    }
+
     public function activeProducts()
     {
         return $this->hasMany(Product::class, 'user_id')
