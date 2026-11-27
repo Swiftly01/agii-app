@@ -115,40 +115,8 @@
                         </div>
                         @endguest
                         
-                        @auth
-                        <!-- Banner Slider -->
-                        <div class="hero-banner">
-                            <div id="heroCarousel" class="carousel slide" data-bs-ride="carousel">
-                                <div class="carousel-indicators">
-                                    <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="0" class="active"></button>
-                                    <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="1"></button>
-                                    <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="2"></button>
-                                </div>
-                                <div class="carousel-inner">
-                                    <div class="carousel-item active">
-                                        <img src="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?ixlib=rb-1.2.1&auto=format&fit=crop&w=1200&h=400&q=80" 
-                                             class="d-block w-100" alt="Tech Deals" style="height: 400px; object-fit: cover;">
-                                    </div>
-                                    <div class="carousel-item">
-                                        <img src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?ixlib=rb-1.2.1&auto=format&fit=crop&w=1200&h=400&q=80" 
-                                             class="d-block w-100" alt="Fashion Sale" style="height: 400px; object-fit: cover;">
-                                    </div>
-                                    <div class="carousel-item">
-                                        <img src="https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?ixlib=rb-1.2.1&auto=format&fit=crop&w=1200&h=400&q=80" 
-                                             class="d-block w-100" alt="Home Appliances" style="height: 400px; object-fit: cover;">
-                                    </div>
-                                </div>
-                                <button class="carousel-control-prev" type="button" data-bs-target="#heroCarousel" data-bs-slide="prev">
-                                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                                    <span class="visually-hidden">Previous</span>
-                                </button>
-                                <button class="carousel-control-next" type="button" data-bs-target="#heroCarousel" data-bs-slide="next">
-                                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                                    <span class="visually-hidden">Next</span>
-                                </button>
-                            </div>
-                        </div>
-                        @endauth
+                        <!-- Banner Slider: guests only see it when a vendor has paid for a spotlight -->
+                        @include('home.hero-spotlight', ['houseBanners' => auth()->check()])
 
                         <!-- Quick Categories Grid -->
                         <div class="quick-categories p-3 border-top">

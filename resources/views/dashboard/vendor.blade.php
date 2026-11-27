@@ -16,7 +16,7 @@
         <!-- Sidebar -->
         <nav class="navbar navbar-expand-lg navbar-light bg-white sidebar d-none">
             <div class="container-fluid">
-                <a class="navbar-brand sidebar-logo" href="#"><img src="{{ asset('images/agiilogo3.png') }}" width="100" alt="Agii"></a>
+                <a class="navbar-brand sidebar-logo" href="#">Agii Vendor</a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#vendorSidebar">
                     <span class="navbar-toggler-icon"></span>
                 </button>
@@ -361,6 +361,14 @@
                         </div>
                         <h5 class="action-title">My Adverts</h5>
                         <p class="action-desc">Manage your product listings</p>
+                    </div>
+
+                    <div class="action-card" onclick="location.href='{{ route('spotlight.show') }}'">
+                        <div class="action-icon">
+                            <i class="bi bi-stars"></i>
+                        </div>
+                        <h5 class="action-title">Homepage Spotlight</h5>
+                        <p class="action-desc">Feature a product in the hero</p>
                     </div>
                 </div>
             </div>

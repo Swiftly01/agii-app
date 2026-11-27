@@ -18,6 +18,13 @@
                     </span>
                     <span class="badge {{ $marketer->status->badgeClass() }} ms-1">{{ $marketer->status->label() }}</span>
                 </div>
+                <div class="mt-2">
+                    <strong>Experience:</strong> {{ $marketer->years_of_experience ?? 'N/A' }} {{ Str::plural('year', (int) $marketer->years_of_experience) }}
+                    · <strong>Education:</strong> {{ $marketer->education_level?->label() ?? 'N/A' }}
+                    @if ($marketer->hasCertificate())
+                        · <a href="{{ route('admin.marketers.certificate', $marketer) }}">Download certificate</a>
+                    @endif
+                </div>
                 @if ($marketer->application_note)
                     <p class="mt-2 mb-0"><strong>Application note:</strong> {{ $marketer->application_note }}</p>
                 @endif

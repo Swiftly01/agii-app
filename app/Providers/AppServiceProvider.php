@@ -9,10 +9,15 @@ use App\Observers\ProductObserver;
 use App\Observers\VendorSubscriptionObserver;
 use App\Services\Analytics\AdminAnalyticsService;
 use App\Services\Analytics\Metrics;
+use App\Services\BoostPaymentService;
+use App\Services\Payments\PaystackWebhookDispatcher;
 use App\Services\Sms\SmsManager;
+use App\Services\Spotlight\SpotlightPaymentService;
+use App\View\Composers\HeroSpotlightComposer;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\View;
 
 
 class AppServiceProvider extends ServiceProvider
@@ -26,6 +31,8 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(SmsGateway::class, fn ($app) => new SmsManager($app));
 
         $this->registerAnalytics();
+
+        $this->registerPaystackHandlers();
     }
 
     /**
@@ -40,6 +47,20 @@ class AppServiceProvider extends ServiceProvider
         VendorSubscription::observe(VendorSubscriptionObserver::class);
 
         Event::subscribe(\App\Listeners\AnalyticsEventSubscriber::class);
+
+        // The hero partial always receives the paid spotlight products
+        View::composer('home.hero-spotlight', HeroSpotlightComposer::class);
+    }
+
+    // Add a class implementing PaystackChargeHandler here and the central webhook settles its payments too
+    protected function registerPaystackHandlers(): void
+    {
+        $this->app->tag([
+            BoostPaymentService::class,
+            SpotlightPaymentService::class,
+        ], 'paystack.charge_handlers');
+
+        $this->app->when(PaystackWebhookDispatcher::class)->needs('$handlers')->giveTagged('paystack.charge_handlers');
     }
 
     // Listeners in app/Listeners are auto-discovered from their typed handle() method, so they must not be registered again here

@@ -2,13 +2,14 @@
 
 namespace App\Services;
 
+use App\Contracts\PaystackChargeHandler;
 use App\Models\BoostSubscription;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use RuntimeException;
 
-class BoostPaymentService
+class BoostPaymentService implements PaystackChargeHandler
 {
     public function __construct(
         private readonly PaystackService $paystackService,

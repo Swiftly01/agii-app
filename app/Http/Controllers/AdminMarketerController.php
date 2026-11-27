@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\MarketerStatus;
 use App\Models\Marketer;
 use App\Services\Marketer\MarketerApprovalService;
+use App\Services\Marketer\MarketerCertificateStorage;
 use App\Services\Marketer\MarketerDirectory;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -15,6 +16,7 @@ class AdminMarketerController extends Controller
     public function __construct(
         private readonly MarketerDirectory $directory,
         private readonly MarketerApprovalService $approval,
+        private readonly MarketerCertificateStorage $certificates,
     ) {}
 
     // Marketer list with platform totals and per-marketer vendor and commission figures
@@ -87,5 +89,16 @@ class AdminMarketerController extends Controller
             'marketer' => $marketer,
             'referrals' => $this->directory->referrals($marketer),
         ]);
+    }
+
+    // Admin-only download of the certificate a marketer attached at sign up
+    public function certificate(Marketer $marketer)
+    {
+        abort_unless($this->certificates->exists($marketer->certificate_path), 404);
+
+        return $this->certificates->download(
+            $marketer->certificate_path,
+            'certificate-' . Str::slug($marketer->user?->full_name ?: 'marketer'),
+        );
     }
 }

@@ -23,6 +23,9 @@ return Application::configure(basePath: dirname(__DIR__))
         'admin' => EnsureUserIsAdmin::class,
         'role' => EnsureUserHasRole::class,
     ]);
+
+    // Paystack posts here server to server so it carries no CSRF token
+    $middleware->validateCsrfTokens(except: ['paystack/webhook']);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
